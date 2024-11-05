@@ -11,4 +11,7 @@ router.post("/users", express.json(), controller.createUser);
 // Route for get all users
 router.get("/users", controller.getALLUsers);
 
+// Route for get a specific users
+router.get("/users/:userId", controller.getUser);
+
 export default router;

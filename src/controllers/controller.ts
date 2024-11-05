@@ -75,3 +75,25 @@ export const getALLUsers = async (req: Request, res: Response) => {
   const users = await User.findAll();
   res.status(200).json(users);
 };
+
+// Gett user information function
+export const getUser = async (req: Request, res: Response): Promise<any> => {
+  // check if user id valid or not
+  const userID = Number(req.params.userId);
+  if (isNaN(userID) || userID <= 0 || !Number.isInteger(userID)) {
+    return res.status(400).json({
+      error: "Invalid user ID",
+      message: "user ID must be a positive integer",
+    });
+  }
+  // return user information if it is exist
+  const user = await User.findByPk(userID);
+  if (user) {
+    return res.status(200).json(user);
+  }
+  // return error message because use does not exist
+  return res.status(404).json({
+    error: "User not found",
+    message: "the user you are trying to fetch doest not exist",
+  });
+};
