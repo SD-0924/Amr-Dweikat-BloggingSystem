@@ -1,39 +1,73 @@
 // Import Request and Response from express module
 import { Request, Response } from "express";
 
+// Import user methods from model
+import { User } from "../models/model";
+
 // Import joi schema validator
 import joi from "joi";
 
 // Joi validation schema for create user
-const userSchema = joi.object({
-  userID: joi
-    .number()
-    .integer()
-    .min(1)
-    .message("userID property must be positive integer number"),
-  userName: joi
-    .string()
-    .min(1)
-    .max(20)
-    .required()
-    .message(
-      "userName property is required and must be a string that is at least 1 character long"
-    ),
-  password: joi
-    .string()
-    .min(8)
-    .max(20)
-    .required()
-    .message(
-      "password property is required and must be a string between 8 and 20 characters long"
-    ),
+const createUserSchema = joi.object({
+  userID: joi.number().integer().min(1),
+  userName: joi.string().min(1).max(20).required(),
+  password: joi.string().min(8).max(20).required(),
   email: joi.string().email().required(),
-  age: joi.number().integer().min(18).required(),
 });
 
 // Create user function
-export const createUser = (req: Request, res: Response): any => {
-  res.status(201).json({ message: "create user" });
+export const createUser = async (req: Request, res: Response): Promise<any> => {
+  // check if body request valid or not
+  const { error, value } = createUserSchema.validate(req.body);
+  if (error) {
+    return res.status(400).json({
+      error: "Invalid body request",
+      message: error.details[0].message.replaceAll(`"`, `'`),
+    });
+  }
+  // check if user already exist or not
+  if (req.body.hasOwnProperty("userID")) {
+    const exist = await User.findByPk(req.body.userID);
+    if (exist) {
+      return res.status(409).json({
+        error: "Invalid body request",
+        message: "the user you are trying to create already exists",
+      });
+    }
+  }
+  // check if other user using same email or not
+  const user = await User.findOne({
+    where: {
+      email: req.body.email,
+    },
+  });
+  if (user) {
+    return res.status(400).json({
+      error: "Invalid body request",
+      message:
+        "the email you are trying to use is already associated with another user",
+    });
+  }
+  // create a new user
+  let newUser;
+  if (req.body.hasOwnProperty("userID")) {
+    newUser = await User.create({
+      userID: req.body.userID,
+      userName: req.body.userName,
+      password: req.body.password,
+      email: req.body.email,
+    });
+  } else {
+    newUser = await User.create({
+      userName: req.body.userName,
+      password: req.body.password,
+      email: req.body.email,
+    });
+  }
+  res.status(201).json({
+    message: "User created successfully",
+    user: newUser,
+  });
 };
 
 // Gett all users function
