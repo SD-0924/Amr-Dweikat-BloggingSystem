@@ -14,4 +14,7 @@ router.get("/users", controller.getALLUsers);
 // Route for get a specific users
 router.get("/users/:userId", controller.getUser);
 
+// Route for update a specific users
+router.put("/users/:userId", express.json(), controller.updateUser);
+
 export default router;
