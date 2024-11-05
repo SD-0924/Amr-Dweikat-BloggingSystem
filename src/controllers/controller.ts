@@ -72,10 +72,6 @@ export const createUser = async (req: Request, res: Response): Promise<any> => {
 
 // Gett all users function
 export const getALLUsers = async (req: Request, res: Response) => {
-  // await imageModel.resizeImage(
-  //   req.params.imageName,
-  //   req.body.width,
-  //   req.body.height
-  // );
-  res.status(200).json({ message: "get all users" });
+  const users = await User.findAll();
+  res.status(200).json(users);
 };
