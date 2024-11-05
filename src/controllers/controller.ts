@@ -177,3 +177,35 @@ export const updateUser = async (req: Request, res: Response): Promise<any> => {
     user: newUser,
   });
 };
+
+// Delete user
+export const deleteUser = async (req: Request, res: Response): Promise<any> => {
+  // check if user id valid or not
+  const userID = Number(req.params.userId);
+  if (isNaN(userID) || userID <= 0 || !Number.isInteger(userID)) {
+    return res.status(400).json({
+      error: "Invalid user ID",
+      message: "user ID must be a positive integer",
+    });
+  }
+
+  // delete user based on id that user provided
+  const result = await User.destroy({
+    where: {
+      userID: userID,
+    },
+  });
+
+  // error message because user does not exist
+  if (result === 0) {
+    return res.status(404).json({
+      error: "User not found",
+      message: "the user you are trying to delete already not exist",
+    });
+  }
+
+  // sucess message that user deleted
+  res.status(200).json({
+    message: "User deleted successfully",
+  });
+};
