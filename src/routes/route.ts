@@ -20,4 +20,7 @@ router.put("/users/:userId", express.json(), controller.updateUser);
 // Route for delete a specific user
 router.delete("/users/:userId", controller.deleteUser);
 
+// Route for create post
+router.post("/posts", express.json(), controller.createPost);
+
 export default router;

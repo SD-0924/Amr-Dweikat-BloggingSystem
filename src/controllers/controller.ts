@@ -12,13 +12,21 @@ const createUserSchema = joi.object({
   userID: joi.number().integer().min(1),
   userName: joi.string().min(1).max(20).required(),
   password: joi.string().min(8).max(20).required(),
-  email: joi.string().email().required(),
+  email: joi.string().max(255).email().required(),
 });
 
 // Joi validation schema for update user
 const updateUserSchema = createUserSchema.fork(["userID"], (schema) =>
   schema.required()
 );
+
+// Joi validation schema for create post
+const createPostSchema = joi.object({
+  postID: joi.number().integer().min(1),
+  userID: joi.number().integer().min(1).required(),
+  title: joi.string().min(1).max(255).required(),
+  content: joi.string().min(1).max(255).required(),
+});
 
 // To check if id in URL valid id or not
 const isPositiveInteger = (str: string): boolean =>
@@ -182,5 +190,45 @@ export const deleteUser = async (req: Request, res: Response): Promise<any> => {
   // sucess message that user deleted
   res.status(200).json({
     message: "User deleted successfully",
+  });
+};
+
+// Create new post
+export const createPost = async (req: Request, res: Response): Promise<any> => {
+  // check if body request valid or not
+  const { error, value } = createPostSchema.validate(req.body);
+  if (error) {
+    return res.status(400).json({
+      error: "Invalid body request",
+      message: error.details[0].message.replaceAll(`"`, `'`),
+    });
+  }
+
+  // check if post already exist or not
+  if (req.body.hasOwnProperty("postID")) {
+    if (await model.getPost(req.body.postID)) {
+      return res.status(409).json({
+        error: "Post already esist",
+        message: "the post that you are trying to create already exists",
+      });
+    }
+  }
+
+  return res.status(200).send("done ya gale");
+
+  // check if other user using same email or not
+  if (await model.isUserHasSameEmail(req.body.email)) {
+    return res.status(400).json({
+      error: "Invalid body request",
+      message:
+        "the email you are trying to use is already associated with another user",
+    });
+  }
+
+  // create a new user
+  const newUser = await model.createUser(req.body);
+  res.status(201).json({
+    message: "User created successfully",
+    user: newUser,
   });
 };

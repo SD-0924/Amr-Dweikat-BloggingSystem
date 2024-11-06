@@ -99,3 +99,47 @@ export const deleteUser = async (userID: number): Promise<any> =>
       userID: userID,
     },
   });
+
+// Define the Post model
+const Post = sequelize.define(
+  "post",
+  {
+    userID: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      references: {
+        model: "user",
+        key: "userID",
+      },
+    },
+    postID: {
+      type: DataTypes.INTEGER,
+      primaryKey: true,
+      autoIncrement: true,
+    },
+    title: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    content: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    createdAt: {
+      type: DataTypes.DATE,
+      defaultValue: DataTypes.NOW,
+    },
+    updatedAt: {
+      type: DataTypes.DATE,
+      defaultValue: DataTypes.NOW,
+    },
+  },
+  {
+    tableName: "post",
+    timestamps: true,
+  }
+);
+
+// get post
+export const getPost = async (postID: number): Promise<any> =>
+  await Post.findByPk(postID);
