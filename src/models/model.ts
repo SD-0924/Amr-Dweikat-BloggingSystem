@@ -282,6 +282,20 @@ export const createCategory = async (
 export const getCategory = async (categoryID: number): Promise<any> =>
   await Category.findByPk(categoryID);
 
+// get all categories
+export const getCategories = async (postID: number): Promise<any> => {
+  const categories = await Post_Category.findAll({
+    where: {
+      postID: postID,
+    },
+  });
+  const result = [];
+  for (const category of categories) {
+    result.push(await getCategory(category.dataValues.categoryID));
+  }
+  return result;
+};
+
 // Define the Comment model
 const Comment = sequelize.define(
   "comment",

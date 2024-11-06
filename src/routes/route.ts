@@ -36,6 +36,9 @@ router.post(
   controller.createCategory
 );
 
+// Route for get all categories realted to specific post
+router.get("/posts/:postId/categories", controller.getCategories);
+
 // Route for create comment for a specific post
 router.post(
   "/posts/:postId/comments",
