@@ -1,8 +1,8 @@
 // Import Request and Response from express module
 import { Request, Response } from "express";
 
-// Import user methods from model
-import { User } from "../models/model";
+// Import all methods from model
+import * as model from "../models/model";
 
 // Import joi schema validator
 import joi from "joi";
@@ -20,6 +20,10 @@ const updateUserSchema = createUserSchema.fork(["userID"], (schema) =>
   schema.required()
 );
 
+// To check if id in URL valid id or not
+const isPositiveInteger = (str: string): boolean =>
+  /^[1-9]\d*$/.test(str) && !str.includes(".");
+
 // Create new user
 export const createUser = async (req: Request, res: Response): Promise<any> => {
   // check if body request valid or not
@@ -33,21 +37,16 @@ export const createUser = async (req: Request, res: Response): Promise<any> => {
 
   // check if user already exist or not
   if (req.body.hasOwnProperty("userID")) {
-    if (await User.findByPk(req.body.userID)) {
+    if (await model.getUser(req.body.userID)) {
       return res.status(409).json({
-        error: "Invalid body request",
-        message: "the user you are trying to create already exists",
+        error: "User already esist",
+        message: "the user that you are trying to create already exists",
       });
     }
   }
 
   // check if other user using same email or not
-  const user = await User.findOne({
-    where: {
-      email: req.body.email,
-    },
-  });
-  if (user) {
+  if (await model.isUserHasSameEmail(req.body.email)) {
     return res.status(400).json({
       error: "Invalid body request",
       message:
@@ -56,21 +55,7 @@ export const createUser = async (req: Request, res: Response): Promise<any> => {
   }
 
   // create a new user
-  let newUser;
-  if (req.body.hasOwnProperty("userID")) {
-    newUser = await User.create({
-      userID: req.body.userID,
-      userName: req.body.userName,
-      password: req.body.password,
-      email: req.body.email,
-    });
-  } else {
-    newUser = await User.create({
-      userName: req.body.userName,
-      password: req.body.password,
-      email: req.body.email,
-    });
-  }
+  const newUser = await model.createUser(req.body);
   res.status(201).json({
     message: "User created successfully",
     user: newUser,
@@ -78,24 +63,24 @@ export const createUser = async (req: Request, res: Response): Promise<any> => {
 };
 
 // Gett all users
-export const getALLUsers = async (req: Request, res: Response) => {
-  const users = await User.findAll();
-  res.status(200).json(users);
-};
+export const getALLUsers = async (req: Request, res: Response): Promise<any> =>
+  res.status(200).json(await model.getAllUsers());
 
 // Get user information
 export const getUser = async (req: Request, res: Response): Promise<any> => {
   // check if user id valid or not
-  const userID = Number(req.params.userId);
-  if (isNaN(userID) || userID <= 0 || !Number.isInteger(userID)) {
+  if (!isPositiveInteger(req.params.userId)) {
     return res.status(400).json({
       error: "Invalid user ID",
       message: "user ID must be a positive integer",
     });
   }
 
+  // get user id from URL
+  const userID = Number(req.params.userId);
+
   // return user information if it is exist
-  const user = await User.findByPk(userID);
+  const user = await model.getUser(userID);
   if (user) {
     return res.status(200).json(user);
   }
@@ -110,16 +95,18 @@ export const getUser = async (req: Request, res: Response): Promise<any> => {
 // Update user information
 export const updateUser = async (req: Request, res: Response): Promise<any> => {
   // check if user id valid or not
-  const userID = Number(req.params.userId);
-  if (isNaN(userID) || userID <= 0 || !Number.isInteger(userID)) {
+  if (!isPositiveInteger(req.params.userId)) {
     return res.status(400).json({
       error: "Invalid user ID",
       message: "user ID must be a positive integer",
     });
   }
 
+  // get user id from URL
+  const userID = Number(req.params.userId);
+
   // check user if it is exist or not
-  if (!(await User.findByPk(userID))) {
+  if (!(await model.getUser(userID))) {
     return res.status(404).json({
       error: "User not found",
       message:
@@ -137,7 +124,7 @@ export const updateUser = async (req: Request, res: Response): Promise<any> => {
   }
 
   // check if there is a user has the same new id or not
-  if (await User.findByPk(req.body.userID)) {
+  if (await model.getUser(req.body.userID)) {
     return res.status(400).json({
       error: "Invalid body request",
       message: "a user already has the new user ID",
@@ -145,33 +132,23 @@ export const updateUser = async (req: Request, res: Response): Promise<any> => {
   }
 
   // check if other user using same email or not
-  const user = await User.findOne({
-    where: {
-      email: req.body.email,
-    },
-  });
-  if (user) {
+  if (await model.isUserHasSameEmail(req.body.email)) {
     return res.status(400).json({
       error: "Invalid body request",
-      message: "a user already has the new email",
+      message: "there is a user already has the new email",
     });
   }
 
   // update user information
-  await User.update(
-    {
-      userID: req.body.userID,
-      userName: req.body.userName,
-      password: req.body.password,
-      email: req.body.email,
-    },
-    {
-      where: { userID: userID },
-    }
-  );
+  await model.updateUser(userID, {
+    userID: req.body.userID,
+    userName: req.body.userName,
+    password: req.body.password,
+    email: req.body.email,
+  });
 
   // fetch new user
-  const newUser = await User.findByPk(req.body.userID);
+  const newUser = await model.getUser(req.body.userID);
   res.status(200).json({
     message: "User updated successfully",
     user: newUser,
@@ -181,20 +158,18 @@ export const updateUser = async (req: Request, res: Response): Promise<any> => {
 // Delete user
 export const deleteUser = async (req: Request, res: Response): Promise<any> => {
   // check if user id valid or not
-  const userID = Number(req.params.userId);
-  if (isNaN(userID) || userID <= 0 || !Number.isInteger(userID)) {
+  if (!isPositiveInteger(req.params.userId)) {
     return res.status(400).json({
       error: "Invalid user ID",
       message: "user ID must be a positive integer",
     });
   }
 
+  // get user id from URL
+  const userID = Number(req.params.userId);
+
   // delete user based on id that user provided
-  const result = await User.destroy({
-    where: {
-      userID: userID,
-    },
-  });
+  const result = await model.deleteUser(userID);
 
   // error message because user does not exist
   if (result === 0) {
