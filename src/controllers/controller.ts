@@ -280,3 +280,33 @@ export const updatePost = async (req: Request, res: Response): Promise<any> => {
     post: newPost,
   });
 };
+
+// Delete post
+export const deletePost = async (req: Request, res: Response): Promise<any> => {
+  // check if post id valid or not
+  if (!isPositiveInteger(req.params.postId)) {
+    return res.status(400).json({
+      error: "Invalid post ID",
+      message: "post ID must be a positive integer",
+    });
+  }
+
+  // get user id from URL
+  const postID = Number(req.params.postId);
+
+  // delete user based on id that user provided
+  const result = await model.deletePost(postID);
+
+  // error message because post does not exist
+  if (result === 0) {
+    return res.status(404).json({
+      error: "Post not found",
+      message: "the post you are trying to delete already not exist",
+    });
+  }
+
+  // sucess message that post deleted
+  res.status(200).json({
+    message: "Post deleted successfully",
+  });
+};

@@ -172,3 +172,11 @@ export const updatePost = async (postID: number, postInfo: any): Promise<any> =>
       where: { postID: postID },
     }
   );
+
+// delete post
+export const deletePost = async (postID: number): Promise<any> =>
+  await Post.destroy({
+    where: {
+      postID: postID,
+    },
+  });

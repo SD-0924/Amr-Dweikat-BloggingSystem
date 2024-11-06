@@ -26,4 +26,7 @@ router.post("/posts", express.json(), controller.createPost);
 // Route for update a specific post
 router.put("/posts/:postId", express.json(), controller.updatePost);
 
+// Route for delete a specific post
+router.delete("/posts/:postId", controller.deletePost);
+
 export default router;
