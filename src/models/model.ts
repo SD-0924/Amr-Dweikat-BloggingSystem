@@ -82,7 +82,6 @@ export const getUser = async (userID: number): Promise<any> =>
 export const updateUser = async (userID: number, userInfo: any): Promise<any> =>
   await User.update(
     {
-      userID: userInfo.userID,
       userName: userInfo.userName,
       password: userInfo.password,
       email: userInfo.email,
@@ -108,9 +107,10 @@ const Post = sequelize.define(
       type: DataTypes.INTEGER,
       allowNull: false,
       references: {
-        model: "user",
+        model: User,
         key: "userID",
       },
+      onDelete: "CASCADE",
     },
     postID: {
       type: DataTypes.INTEGER,
@@ -139,6 +139,23 @@ const Post = sequelize.define(
     timestamps: true,
   }
 );
+
+// create new post
+export const createPost = async (postInfo: any): Promise<any> => {
+  if (postInfo.hasOwnProperty("postID")) {
+    return await Post.create({
+      userID: postInfo.userID,
+      postID: postInfo.postID,
+      title: postInfo.title,
+      content: postInfo.content,
+    });
+  }
+  return await Post.create({
+    userID: postInfo.userID,
+    title: postInfo.title,
+    content: postInfo.content,
+  });
+};
 
 // get post
 export const getPost = async (postID: number): Promise<any> =>
