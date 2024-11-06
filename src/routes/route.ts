@@ -29,4 +29,11 @@ router.put("/posts/:postId", express.json(), controller.updatePost);
 // Route for delete a specific post
 router.delete("/posts/:postId", controller.deletePost);
 
+// Route for create comment
+router.post(
+  "/posts/:postId/comments",
+  express.json(),
+  controller.createComment
+);
+
 export default router;

@@ -36,6 +36,12 @@ const updatePostSchema = joi.object({
   content: joi.string().min(1).max(255).required(),
 });
 
+// Joi validation schema for create comment
+const createCommentSchema = joi.object({
+  commentID: joi.number().integer().min(1),
+  content: joi.string().min(1).max(255).required(),
+});
+
 // To check if id in URL valid id or not
 const isPositiveInteger = (str: string): boolean =>
   /^[1-9]\d*$/.test(str) && !str.includes(".");
@@ -55,7 +61,7 @@ export const createUser = async (req: Request, res: Response): Promise<any> => {
   if (req.body.hasOwnProperty("userID")) {
     if (await model.getUser(req.body.userID)) {
       return res.status(409).json({
-        error: "User already esist",
+        error: "User already exists",
         message: "the user that you are trying to create already exists",
       });
     }
@@ -104,7 +110,7 @@ export const getUser = async (req: Request, res: Response): Promise<any> => {
   // return error message because use does not exist
   return res.status(404).json({
     error: "User not found",
-    message: "the user you are trying to fetch doest not exist",
+    message: "the user you are trying to fetch doest not exists",
   });
 };
 
@@ -126,7 +132,7 @@ export const updateUser = async (req: Request, res: Response): Promise<any> => {
     return res.status(404).json({
       error: "User not found",
       message:
-        "the user that you are trying to update their information does not exist",
+        "the user that you are trying to update their information does not exists",
     });
   }
 
@@ -183,7 +189,7 @@ export const deleteUser = async (req: Request, res: Response): Promise<any> => {
   if (result === 0) {
     return res.status(404).json({
       error: "User not found",
-      message: "the user you are trying to delete already not exist",
+      message: "the user you are trying to delete already not exists",
     });
   }
 
@@ -208,7 +214,7 @@ export const createPost = async (req: Request, res: Response): Promise<any> => {
   if (req.body.hasOwnProperty("postID")) {
     if (await model.getPost(req.body.postID)) {
       return res.status(409).json({
-        error: "Post already esist",
+        error: "Post already exists",
         message: "the post that you are trying to create already exists",
       });
     }
@@ -220,7 +226,7 @@ export const createPost = async (req: Request, res: Response): Promise<any> => {
     return res.status(404).json({
       error: "User not found",
       message:
-        "the user you are trying to associate with this post does not exis",
+        "the user you are trying to associate with this post does not exists",
     });
   }
 
@@ -252,7 +258,7 @@ export const updatePost = async (req: Request, res: Response): Promise<any> => {
     return res.status(404).json({
       error: "Post not found",
       message:
-        "the post that you are trying to update their information does not exist",
+        "the post that you are trying to update their information does not exists",
     });
   }
 
@@ -301,12 +307,53 @@ export const deletePost = async (req: Request, res: Response): Promise<any> => {
   if (result === 0) {
     return res.status(404).json({
       error: "Post not found",
-      message: "the post you are trying to delete already not exist",
+      message: "the post you are trying to delete already not exists",
     });
   }
 
   // sucess message that post deleted
   res.status(200).json({
     message: "Post deleted successfully",
+  });
+};
+
+// Create new comment
+export const createComment = async (
+  req: Request,
+  res: Response
+): Promise<any> => {
+  // check if post id valid or not
+  if (!isPositiveInteger(req.params.postId)) {
+    return res.status(400).json({
+      error: "Invalid post ID",
+      message: "post ID must be a positive integer",
+    });
+  }
+
+  // get post id from URL
+  const postID = Number(req.params.postId);
+
+  // check post if exist or not
+  if (!(await model.getPost(postID))) {
+    return res.status(404).json({
+      error: "Post does not exists",
+      message: "the post you're trying to work on does not exists",
+    });
+  }
+
+  // check if body request valid or not
+  const { error, value } = createCommentSchema.validate(req.body);
+  if (error) {
+    return res.status(400).json({
+      error: "Invalid body request",
+      message: error.details[0].message.replaceAll(`"`, `'`),
+    });
+  }
+
+  // create a new comment
+  const newComment = await model.createComment(postID, req.body);
+  res.status(201).json({
+    message: "Comment created successfully",
+    comment: newComment,
   });
 };

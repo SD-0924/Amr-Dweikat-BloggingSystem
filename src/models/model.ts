@@ -180,3 +180,70 @@ export const deletePost = async (postID: number): Promise<any> =>
       postID: postID,
     },
   });
+
+// Define the Comment model
+const Comment = sequelize.define(
+  "comment",
+  {
+    userID: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      references: {
+        model: User,
+        key: "userID",
+      },
+      onDelete: "CASCADE",
+    },
+    postID: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      references: {
+        model: Post,
+        key: "postID",
+      },
+      onDelete: "CASCADE",
+    },
+    commentID: {
+      type: DataTypes.INTEGER,
+      primaryKey: true,
+      autoIncrement: true,
+    },
+    content: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    createdAt: {
+      type: DataTypes.DATE,
+      defaultValue: DataTypes.NOW,
+    },
+    updatedAt: {
+      type: DataTypes.DATE,
+      defaultValue: DataTypes.NOW,
+    },
+  },
+  {
+    tableName: "comment",
+    timestamps: true,
+  }
+);
+
+// create new comment
+export const createComment = async (
+  postID: number,
+  commentInfo: any
+): Promise<any> => {
+  const user = await getPost(postID);
+  if (commentInfo.hasOwnProperty("commentID")) {
+    return await Comment.create({
+      userID: user.dataValues.userID,
+      postID: postID,
+      commentID: commentInfo.commentID,
+      content: commentInfo.content,
+    });
+  }
+  return await Comment.create({
+    userID: user.dataValues.userID,
+    postID: postID,
+    content: commentInfo.content,
+  });
+};
