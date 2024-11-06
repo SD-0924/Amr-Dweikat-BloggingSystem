@@ -160,3 +160,15 @@ export const createPost = async (postInfo: any): Promise<any> => {
 // get post
 export const getPost = async (postID: number): Promise<any> =>
   await Post.findByPk(postID);
+
+// update post
+export const updatePost = async (postID: number, postInfo: any): Promise<any> =>
+  await Post.update(
+    {
+      title: postInfo.title,
+      content: postInfo.content,
+    },
+    {
+      where: { postID: postID },
+    }
+  );

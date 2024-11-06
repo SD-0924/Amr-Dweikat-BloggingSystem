@@ -30,6 +30,12 @@ const createPostSchema = joi.object({
   content: joi.string().min(1).max(255).required(),
 });
 
+// Joi validation schema for update post
+const updatePostSchema = joi.object({
+  title: joi.string().min(1).max(255).required(),
+  content: joi.string().min(1).max(255).required(),
+});
+
 // To check if id in URL valid id or not
 const isPositiveInteger = (str: string): boolean =>
   /^[1-9]\d*$/.test(str) && !str.includes(".");
@@ -218,12 +224,59 @@ export const createPost = async (req: Request, res: Response): Promise<any> => {
     });
   }
 
-  // create a new user
+  // create a new post
   const { dataValues: newPost } = await model.createPost(req.body);
   delete newPost["userID"];
   newPost["user"] = user;
   res.status(201).json({
     message: "Post created successfully",
+    post: newPost,
+  });
+};
+
+// Update post
+export const updatePost = async (req: Request, res: Response): Promise<any> => {
+  // check if post id valid or not
+  if (!isPositiveInteger(req.params.postId)) {
+    return res.status(400).json({
+      error: "Invalid post ID",
+      message: "post ID must be a positive integer",
+    });
+  }
+
+  // get post id from URL
+  const postID = Number(req.params.postId);
+
+  // check post if it is exist or not
+  if (!(await model.getPost(postID))) {
+    return res.status(404).json({
+      error: "Post not found",
+      message:
+        "the post that you are trying to update their information does not exist",
+    });
+  }
+
+  // check if body request valid or not
+  const { error, value } = updatePostSchema.validate(req.body);
+  if (error) {
+    return res.status(400).json({
+      error: "Invalid body request",
+      message: error.details[0].message.replaceAll(`"`, `'`),
+    });
+  }
+
+  // update post
+  await model.updatePost(postID, {
+    title: req.body.title,
+    content: req.body.content,
+  });
+
+  // fetch new post
+  const { dataValues: newPost } = await model.getPost(postID);
+  newPost["user"] = await model.getUser(newPost["userID"]);
+  delete newPost["userID"];
+  res.status(200).json({
+    message: "Post updated successfully",
     post: newPost,
   });
 };
