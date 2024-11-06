@@ -29,6 +29,13 @@ router.put("/posts/:postId", express.json(), controller.updatePost);
 // Route for delete a specific post
 router.delete("/posts/:postId", controller.deletePost);
 
+// Route for create category for a specific post
+router.post(
+  "/posts/:postId/categories",
+  express.json(),
+  controller.createCategory
+);
+
 // Route for create comment for a specific post
 router.post(
   "/posts/:postId/comments",

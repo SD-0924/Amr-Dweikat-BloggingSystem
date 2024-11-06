@@ -1,9 +1,8 @@
 // Import sequelize module
-import { userInfo } from "os";
 import { Sequelize, DataTypes } from "sequelize";
 
 // Initialize Sequelize with MySQL database credentials
-const sequelize = new Sequelize("blogging_system", "root", "Amr1234", {
+export const sequelize = new Sequelize("blogging_system", "root", "Amr1234", {
   host: "localhost",
   dialect: "mysql",
   logging: false,
@@ -99,6 +98,35 @@ export const deleteUser = async (userID: number): Promise<any> =>
     },
   });
 
+// Define the Category model
+const Category = sequelize.define(
+  "category",
+  {
+    categoryID: {
+      type: DataTypes.INTEGER,
+      primaryKey: true,
+      autoIncrement: true,
+    },
+    name: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      unique: true,
+    },
+    createdAt: {
+      type: DataTypes.DATE,
+      defaultValue: DataTypes.NOW,
+    },
+    updatedAt: {
+      type: DataTypes.DATE,
+      defaultValue: DataTypes.NOW,
+    },
+  },
+  {
+    tableName: "category",
+    timestamps: true,
+  }
+);
+
 // Define the Post model
 const Post = sequelize.define(
   "post",
@@ -137,6 +165,41 @@ const Post = sequelize.define(
   {
     tableName: "post",
     timestamps: true,
+  }
+);
+
+// Define the Post_Category model
+const Post_Category = sequelize.define(
+  "post_category",
+  {
+    postID: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      references: {
+        model: Post,
+        key: "postID",
+      },
+      onDelete: "CASCADE",
+    },
+    categoryID: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      references: {
+        model: Category,
+        key: "categoryID",
+      },
+      onDelete: "CASCADE",
+    },
+    counter: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      autoIncrement: true,
+      primaryKey: true,
+    },
+  },
+  {
+    tableName: "post_category",
+    timestamps: false,
   }
 );
 
@@ -180,6 +243,44 @@ export const deletePost = async (postID: number): Promise<any> =>
       postID: postID,
     },
   });
+
+// check category exist or not
+export const isCategoryExists = async (name: string): Promise<any> =>
+  await Category.findAll({
+    where: {
+      name: name,
+    },
+  });
+
+// create new category
+export const createCategory = async (
+  postID: number,
+  categoryInfo: any
+): Promise<any> => {
+  if (categoryInfo.hasOwnProperty("categoryID")) {
+    const category = await Category.create({
+      categoryID: categoryInfo.categoryID,
+      name: categoryInfo.name,
+    });
+    await Post_Category.create({
+      categoryID: categoryInfo.categoryID,
+      postID: postID,
+    });
+    return category;
+  }
+  const category = await Category.create({
+    name: categoryInfo.name,
+  });
+  await Post_Category.create({
+    categoryID: category.dataValues.categoryID,
+    postID: postID,
+  });
+  return category;
+};
+
+// get category
+export const getCategory = async (categoryID: number): Promise<any> =>
+  await Category.findByPk(categoryID);
 
 // Define the Comment model
 const Comment = sequelize.define(
@@ -247,6 +348,10 @@ export const createComment = async (
     content: commentInfo.content,
   });
 };
+
+// get comment
+export const getComment = async (commentID: number): Promise<any> =>
+  await Comment.findByPk(commentID);
 
 // get all comments
 export const getComments = async (postID: number): Promise<any> =>

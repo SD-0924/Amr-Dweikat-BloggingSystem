@@ -36,6 +36,12 @@ const updatePostSchema = joi.object({
   content: joi.string().min(1).max(255).required(),
 });
 
+// Joi validation schema for create category
+const createCategorySchema = joi.object({
+  categoryID: joi.number().integer().min(1),
+  name: joi.string().min(1).max(255).required(),
+});
+
 // Joi validation schema for create comment
 const createCommentSchema = joi.object({
   commentID: joi.number().integer().min(1),
@@ -88,7 +94,7 @@ export const createUser = async (req: Request, res: Response): Promise<any> => {
 export const getALLUsers = async (req: Request, res: Response): Promise<any> =>
   res.status(200).json(await model.getAllUsers());
 
-// Get user information
+// Get a specific user
 export const getUser = async (req: Request, res: Response): Promise<any> => {
   // check if user id valid or not
   if (!isPositiveInteger(req.params.userId)) {
@@ -114,7 +120,7 @@ export const getUser = async (req: Request, res: Response): Promise<any> => {
   });
 };
 
-// Update user information
+// Update a specific user
 export const updateUser = async (req: Request, res: Response): Promise<any> => {
   // check if user id valid or not
   if (!isPositiveInteger(req.params.userId)) {
@@ -169,7 +175,7 @@ export const updateUser = async (req: Request, res: Response): Promise<any> => {
   });
 };
 
-// Delete user
+// Delete a specific user
 export const deleteUser = async (req: Request, res: Response): Promise<any> => {
   // check if user id valid or not
   if (!isPositiveInteger(req.params.userId)) {
@@ -240,7 +246,7 @@ export const createPost = async (req: Request, res: Response): Promise<any> => {
   });
 };
 
-// Update post
+// Update a specific post
 export const updatePost = async (req: Request, res: Response): Promise<any> => {
   // check if post id valid or not
   if (!isPositiveInteger(req.params.postId)) {
@@ -287,7 +293,7 @@ export const updatePost = async (req: Request, res: Response): Promise<any> => {
   });
 };
 
-// Delete post
+// Delete a specific post
 export const deletePost = async (req: Request, res: Response): Promise<any> => {
   // check if post id valid or not
   if (!isPositiveInteger(req.params.postId)) {
@@ -317,7 +323,67 @@ export const deletePost = async (req: Request, res: Response): Promise<any> => {
   });
 };
 
-// Create new comment
+// Create new category for a specific post
+export const createCategory = async (
+  req: Request,
+  res: Response
+): Promise<any> => {
+  // check if post id valid or not
+  if (!isPositiveInteger(req.params.postId)) {
+    return res.status(400).json({
+      error: "Invalid post ID",
+      message: "post ID must be a positive integer",
+    });
+  }
+
+  // get post id from URL
+  const postID = Number(req.params.postId);
+
+  // check post if exist or not
+  if (!(await model.getPost(postID))) {
+    return res.status(404).json({
+      error: "Post does not exists",
+      message: "the post you're trying to work on does not exists",
+    });
+  }
+
+  // check if body request valid or not
+  const { error, value } = createCategorySchema.validate(req.body);
+  if (error) {
+    return res.status(400).json({
+      error: "Invalid body request",
+      message: error.details[0].message.replaceAll(`"`, `'`),
+    });
+  }
+
+  // check if category id already exist or not
+  if (req.body.hasOwnProperty("categoryID")) {
+    if (await model.getCategory(req.body.categoryID)) {
+      return res.status(409).json({
+        error: "Category id already exists",
+        message: "the categoryID that you are trying to create already exists",
+      });
+    }
+  }
+
+  // check if category already exist or not
+  const categories = await model.isCategoryExists(req.body.name);
+  if (categories.length !== 0) {
+    return res.status(409).json({
+      error: "Category already exists",
+      message: "the category that you are trying to create already exists",
+    });
+  }
+
+  // create a new category
+  const newCategory = await model.createCategory(postID, req.body);
+  res.status(201).json({
+    message: "Category created successfully",
+    category: newCategory,
+  });
+};
+
+// Create new comment for a specific post
 export const createComment = async (
   req: Request,
   res: Response
@@ -348,6 +414,16 @@ export const createComment = async (
       error: "Invalid body request",
       message: error.details[0].message.replaceAll(`"`, `'`),
     });
+  }
+
+  // check if comment id already exist or not
+  if (req.body.hasOwnProperty("commentID")) {
+    if (await model.getComment(req.body.commentID)) {
+      return res.status(409).json({
+        error: "Comment id already exists",
+        message: "the commentID that you are trying to create already exists",
+      });
+    }
   }
 
   // create a new comment
