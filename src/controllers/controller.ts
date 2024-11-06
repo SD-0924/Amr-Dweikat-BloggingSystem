@@ -357,3 +357,32 @@ export const createComment = async (
     comment: newComment,
   });
 };
+
+// get all comments for specific post
+export const getComments = async (
+  req: Request,
+  res: Response
+): Promise<any> => {
+  // check if post id valid or not
+  if (!isPositiveInteger(req.params.postId)) {
+    return res.status(400).json({
+      error: "Invalid post ID",
+      message: "post ID must be a positive integer",
+    });
+  }
+
+  // get post id from URL
+  const postID = Number(req.params.postId);
+
+  // check post if exist or not
+  if (!(await model.getPost(postID))) {
+    return res.status(404).json({
+      error: "Post does not exists",
+      message: "the post you're trying to work on does not exists",
+    });
+  }
+
+  // get all comments
+  const comments = await model.getComments(postID);
+  res.status(200).json(comments);
+};

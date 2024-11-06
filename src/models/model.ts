@@ -247,3 +247,11 @@ export const createComment = async (
     content: commentInfo.content,
   });
 };
+
+// get all comments
+export const getComments = async (postID: number): Promise<any> =>
+  await Comment.findAll({
+    where: {
+      postID: postID,
+    },
+  });

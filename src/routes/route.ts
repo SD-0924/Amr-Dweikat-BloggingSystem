@@ -29,11 +29,14 @@ router.put("/posts/:postId", express.json(), controller.updatePost);
 // Route for delete a specific post
 router.delete("/posts/:postId", controller.deletePost);
 
-// Route for create comment
+// Route for create comment for a specific post
 router.post(
   "/posts/:postId/comments",
   express.json(),
   controller.createComment
 );
+
+// Route for get all comments realted to specific post
+router.get("/posts/:postId/comments", controller.getComments);
 
 export default router;
