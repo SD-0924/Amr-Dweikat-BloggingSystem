@@ -233,6 +233,10 @@ export const createPost = async (req: Request, res: Response): Promise<any> => {
   });
 };
 
+// Gett all posts
+export const getALLPosts = async (req: Request, res: Response): Promise<any> =>
+  res.status(200).json(await model.getALLPosts());
+
 // Update a specific post
 export const updatePost = async (req: Request, res: Response): Promise<any> => {
   // check if post id valid or not

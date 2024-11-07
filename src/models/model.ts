@@ -211,6 +211,20 @@ export const createPost = async (postInfo: any): Promise<any> =>
     content: postInfo.content,
   });
 
+// get all posts
+export const getALLPosts = async (): Promise<any> => {
+  const posts = await Post.findAll();
+  const result = [];
+  for (let post of posts) {
+    post.dataValues["user"] = await getUser(post.dataValues.userID);
+    post.dataValues["categories"] = await getCategories(post.dataValues.postID);
+    post.dataValues["comments"] = await getComments(post.dataValues.postID);
+    delete post.dataValues["userID"];
+    result.push(post.dataValues);
+  }
+  return result;
+};
+
 // get post
 export const getPost = async (postID: number): Promise<any> =>
   await Post.findByPk(postID);
