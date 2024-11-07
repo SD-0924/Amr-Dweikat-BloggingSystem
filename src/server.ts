@@ -1,8 +1,6 @@
 // Import express module
 import express from "express";
 
-import { sequelize } from "./models/model";
-
 // Import all error handler methods from errorHandler module
 import { invalidRoute, invalidJSON } from "./utils/errorHandler";
 
@@ -10,7 +8,7 @@ import { invalidRoute, invalidJSON } from "./utils/errorHandler";
 import route from "./routes/route";
 
 // Initialize an Express application
-const app = express();
+export const app = express();
 
 // Server hostname and port
 const HOSTNAME = "localhost";
