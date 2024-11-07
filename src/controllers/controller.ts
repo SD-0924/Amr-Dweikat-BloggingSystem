@@ -237,6 +237,32 @@ export const createPost = async (req: Request, res: Response): Promise<any> => {
 export const getALLPosts = async (req: Request, res: Response): Promise<any> =>
   res.status(200).json(await model.getALLPosts());
 
+// Gett a specific post
+export const getPost = async (req: Request, res: Response): Promise<any> => {
+  // check if post id valid or not
+  if (!isPositiveInteger(req.params.postId)) {
+    return res.status(400).json({
+      error: "Invalid post ID",
+      message: "post ID must be a positive integer",
+    });
+  }
+
+  // get user id from URL
+  const postID = Number(req.params.postId);
+
+  // return error message because post does not exist
+  if (!(await model.getPost(postID))) {
+    return res.status(404).json({
+      error: "Post not found",
+      message: "the post you are trying to fetch doest not exists",
+    });
+  }
+
+  // return post information if it is exist
+  const post = await model.getFullPostInfo(postID);
+  return res.status(200).json(post);
+};
+
 // Update a specific post
 export const updatePost = async (req: Request, res: Response): Promise<any> => {
   // check if post id valid or not

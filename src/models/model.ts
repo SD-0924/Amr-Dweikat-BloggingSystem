@@ -216,13 +216,19 @@ export const getALLPosts = async (): Promise<any> => {
   const posts = await Post.findAll();
   const result = [];
   for (let post of posts) {
-    post.dataValues["user"] = await getUser(post.dataValues.userID);
-    post.dataValues["categories"] = await getCategories(post.dataValues.postID);
-    post.dataValues["comments"] = await getComments(post.dataValues.postID);
-    delete post.dataValues["userID"];
-    result.push(post.dataValues);
+    result.push(await getFullPostInfo(post.dataValues.postID));
   }
   return result;
+};
+
+// get full post information
+export const getFullPostInfo = async (postID: number): Promise<any> => {
+  const post = await getPost(postID);
+  post.dataValues["user"] = await getUser(post.dataValues.userID);
+  post.dataValues["categories"] = await getCategories(post.dataValues.postID);
+  post.dataValues["comments"] = await getComments(post.dataValues.postID);
+  delete post.dataValues["userID"];
+  return post.dataValues;
 };
 
 // get post

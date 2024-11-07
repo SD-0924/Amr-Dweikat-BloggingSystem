@@ -26,6 +26,9 @@ router.post("/posts", express.json(), controller.createPost);
 // Route for get all posts
 router.get("/posts", controller.getALLPosts);
 
+// Route for get a specific post
+router.get("/posts/:postId", controller.getPost);
+
 // Route for update a specific post
 router.put("/posts/:postId", express.json(), controller.updatePost);
 
