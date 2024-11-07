@@ -29,14 +29,3 @@ app.use(invalidJSON);
 app.listen(PORT, HOSTNAME, () => {
   console.log(`Server is running on http://${HOSTNAME}:${PORT}`);
 });
-
-// Close sequelize connection on process termination
-process.on("SIGINT", async () => {
-  try {
-    await sequelize.close(); // Close the connection pool
-    console.log("Database connection closed");
-  } catch (err) {
-    console.error("Error closing database connection:", err);
-    process.exit(1); // Exit with failure
-  }
-});

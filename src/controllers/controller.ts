@@ -24,7 +24,6 @@ const updateUserSchema = joi.object({
 
 // Joi validation schema for create post
 const createPostSchema = joi.object({
-  postID: joi.number().integer().min(1),
   userID: joi.number().integer().min(1).required(),
   title: joi.string().min(1).max(255).required(),
   content: joi.string().min(1).max(255).required(),
@@ -38,13 +37,11 @@ const updatePostSchema = joi.object({
 
 // Joi validation schema for create category
 const createCategorySchema = joi.object({
-  categoryID: joi.number().integer().min(1),
   name: joi.string().min(1).max(255).required(),
 });
 
 // Joi validation schema for create comment
 const createCommentSchema = joi.object({
-  commentID: joi.number().integer().min(1),
   content: joi.string().min(1).max(255).required(),
 });
 
@@ -216,16 +213,6 @@ export const createPost = async (req: Request, res: Response): Promise<any> => {
     });
   }
 
-  // check if post already exist or not
-  if (req.body.hasOwnProperty("postID")) {
-    if (await model.getPost(req.body.postID)) {
-      return res.status(409).json({
-        error: "Post already exists",
-        message: "the post that you are trying to create already exists",
-      });
-    }
-  }
-
   // check if user exist or not
   const user = await model.getUser(req.body.userID);
   if (!user) {
@@ -356,22 +343,12 @@ export const createCategory = async (
     });
   }
 
-  // check if category id already exist or not
-  if (req.body.hasOwnProperty("categoryID")) {
-    if (await model.getCategory(req.body.categoryID)) {
-      return res.status(409).json({
-        error: "Category id already exists",
-        message: "the categoryID that you are trying to create already exists",
-      });
-    }
-  }
-
-  // check if category already exist or not
-  const categories = await model.isCategoryExists(req.body.name);
-  if (categories.length !== 0) {
+  // check if post already has category or not
+  if (await model.hasCategory(postID, req.body.name)) {
     return res.status(409).json({
-      error: "Category already exists",
-      message: "the category that you are trying to create already exists",
+      error: "Category already assigned",
+      message:
+        "the category that you are trying to assign to the post is already assigned",
     });
   }
 
@@ -443,16 +420,6 @@ export const createComment = async (
       error: "Invalid body request",
       message: error.details[0].message.replaceAll(`"`, `'`),
     });
-  }
-
-  // check if comment id already exist or not
-  if (req.body.hasOwnProperty("commentID")) {
-    if (await model.getComment(req.body.commentID)) {
-      return res.status(409).json({
-        error: "Comment id already exists",
-        message: "the commentID that you are trying to create already exists",
-      });
-    }
   }
 
   // create a new comment

@@ -204,21 +204,12 @@ const Post_Category = sequelize.define(
 );
 
 // create new post
-export const createPost = async (postInfo: any): Promise<any> => {
-  if (postInfo.hasOwnProperty("postID")) {
-    return await Post.create({
-      userID: postInfo.userID,
-      postID: postInfo.postID,
-      title: postInfo.title,
-      content: postInfo.content,
-    });
-  }
-  return await Post.create({
+export const createPost = async (postInfo: any): Promise<any> =>
+  await Post.create({
     userID: postInfo.userID,
     title: postInfo.title,
     content: postInfo.content,
   });
-};
 
 // get post
 export const getPost = async (postID: number): Promise<any> =>
@@ -245,36 +236,54 @@ export const deletePost = async (postID: number): Promise<any> =>
   });
 
 // check category exist or not
-export const isCategoryExists = async (name: string): Promise<any> =>
-  await Category.findAll({
+export const hasCategory = async (
+  postID: number,
+  name: string
+): Promise<any> => {
+  const category = await Category.findOne({
     where: {
       name: name,
     },
   });
+  if (!category) {
+    return false;
+  }
+
+  return await Post_Category.findOne({
+    where: {
+      postID: postID,
+      categoryID: category?.dataValues.categoryID,
+    },
+  });
+};
 
 // create new category
 export const createCategory = async (
   postID: number,
   categoryInfo: any
 ): Promise<any> => {
-  if (categoryInfo.hasOwnProperty("categoryID")) {
-    const category = await Category.create({
-      categoryID: categoryInfo.categoryID,
+  const result = await Category.findAll({
+    where: {
+      name: categoryInfo.name,
+    },
+  });
+  let category;
+  if (result.length === 0) {
+    category = await Category.create({
       name: categoryInfo.name,
     });
-    await Post_Category.create({
-      categoryID: categoryInfo.categoryID,
-      postID: postID,
+  } else {
+    category = await Category.findOne({
+      where: {
+        name: categoryInfo.name,
+      },
     });
-    return category;
   }
-  const category = await Category.create({
-    name: categoryInfo.name,
-  });
   await Post_Category.create({
-    categoryID: category.dataValues.categoryID,
+    categoryID: category?.dataValues.categoryID,
     postID: postID,
   });
+
   return category;
 };
 
@@ -347,17 +356,9 @@ export const createComment = async (
   postID: number,
   commentInfo: any
 ): Promise<any> => {
-  const user = await getPost(postID);
-  if (commentInfo.hasOwnProperty("commentID")) {
-    return await Comment.create({
-      userID: user.dataValues.userID,
-      postID: postID,
-      commentID: commentInfo.commentID,
-      content: commentInfo.content,
-    });
-  }
+  const post = await getPost(postID);
   return await Comment.create({
-    userID: user.dataValues.userID,
+    userID: post.dataValues.userID,
     postID: postID,
     content: commentInfo.content,
   });
