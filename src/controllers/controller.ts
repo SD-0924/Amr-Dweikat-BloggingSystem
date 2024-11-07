@@ -81,6 +81,7 @@ export const createUser = async (req: Request, res: Response): Promise<any> => {
 
   // create a new user
   const newUser = await model.createUser(req.body);
+  delete newUser.dataValues["password"];
   res.status(201).json({
     message: "User created successfully",
     user: newUser,
@@ -107,6 +108,7 @@ export const getUser = async (req: Request, res: Response): Promise<any> => {
   // return user information if it is exist
   const user = await model.getUser(userID);
   if (user) {
+    delete user.dataValues["password"];
     return res.status(200).json(user);
   }
 
@@ -166,6 +168,7 @@ export const updateUser = async (req: Request, res: Response): Promise<any> => {
 
   // fetch new user
   const newUser = await model.getUser(userID);
+  delete newUser.dataValues.password;
   res.status(200).json({
     message: "User updated successfully",
     user: newUser,
@@ -303,6 +306,7 @@ export const updatePost = async (req: Request, res: Response): Promise<any> => {
   // fetch new post
   const { dataValues: newPost } = await model.getPost(postID);
   newPost["user"] = await model.getUser(newPost["userID"]);
+  delete newPost["user"].dataValues["password"];
   delete newPost["userID"];
   res.status(200).json({
     message: "Post updated successfully",

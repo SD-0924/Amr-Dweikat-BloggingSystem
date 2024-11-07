@@ -71,7 +71,13 @@ export const createUser = async (userInfo: any): Promise<any> => {
 };
 
 // get all users
-export const getAllUsers = async (): Promise<any> => await User.findAll();
+export const getAllUsers = async (): Promise<any> => {
+  const users = await User.findAll();
+  for (const user of users) {
+    delete user.dataValues.password;
+  }
+  return users;
+};
 
 // get user
 export const getUser = async (userID: number): Promise<any> =>
@@ -225,8 +231,14 @@ export const getALLPosts = async (): Promise<any> => {
 export const getFullPostInfo = async (postID: number): Promise<any> => {
   const post = await getPost(postID);
   post.dataValues["user"] = await getUser(post.dataValues.userID);
+  delete post.dataValues["user"].dataValues["password"];
   post.dataValues["categories"] = await getCategories(post.dataValues.postID);
   post.dataValues["comments"] = await getComments(post.dataValues.postID);
+
+  for (const comment of post.dataValues["comments"]) {
+    delete comment.dataValues["userID"];
+    delete comment.dataValues["postID"];
+  }
   delete post.dataValues["userID"];
   return post.dataValues;
 };
