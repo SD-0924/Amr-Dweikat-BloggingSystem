@@ -13,9 +13,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Fix permissions for jest binary
-        run: chmod +x ../../node_modules/.bin/jest
-
       - name: Checkout code
         uses: actions/checkout@v2
 
@@ -27,6 +24,9 @@ jobs:
       - name: Install dependencies
         run: |
           npm install
+
+      - name: Fix permissions for jest binary
+        run: chmod +x node_modules/.bin/jest
 
       - name: Run tests
         run: |
