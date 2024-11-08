@@ -12,6 +12,20 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
+    services:
+      mysql:
+        image: mysql:9.1
+        ports:
+          - 3306:3306
+        env:
+          MYSQL_ROOT_PASSWORD: Amr1234
+          MYSQL_DATABASE: blogging_system
+        options: >-
+          --health-cmd="mysqladmin ping --silent"
+          --health-start-period=10s
+          --health-timeout=5s
+          --health-retries=3
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -24,6 +38,20 @@ jobs:
       - name: Install dependencies
         run: |
           npm install
+
+      - name: Set up environment variables for testing
+        run: |
+          echo "DB_HOST=127.0.0.1" >> $GITHUB_ENV
+          echo "DB_USER=root" >> $GITHUB_ENV
+          echo "DB_PASSWORD=Amr1234" >> $GITHUB_ENV
+          echo "DB_NAME=blogging_system" >> $GITHUB_ENV
+
+      - name: Wait for MySQL to be ready
+        run: |
+          for i in {1..30}; do
+            nc -zv 127.0.0.1 3306 && exit 0 || sleep 1;
+          done
+          exit 1
 
       - name: Fix permissions for jest binary
         run: chmod +x node_modules/.bin/jest
