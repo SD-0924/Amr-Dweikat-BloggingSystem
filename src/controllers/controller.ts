@@ -9,7 +9,7 @@ import joi from "joi";
 
 // Joi validation schema for create user
 const createUserSchema = joi.object({
-  userID: joi.number().integer().min(1),
+  userID: joi.number().integer().min(1).strict(),
   userName: joi.string().min(1).max(20).required(),
   password: joi.string().min(8).max(20).required(),
   email: joi.string().max(255).email().required(),
@@ -24,7 +24,7 @@ const updateUserSchema = joi.object({
 
 // Joi validation schema for create post
 const createPostSchema = joi.object({
-  userID: joi.number().integer().min(1).required(),
+  userID: joi.number().integer().min(1).strict().required(),
   title: joi.string().min(1).max(255).required(),
   content: joi.string().min(1).max(255).required(),
 });
@@ -45,9 +45,8 @@ const createCommentSchema = joi.object({
   content: joi.string().min(1).max(255).required(),
 });
 
-// To check if id in URL valid id or not
-const isPositiveInteger = (str: string): boolean =>
-  /^[1-9]\d*$/.test(str) && !str.includes(".");
+// Joi validation schema for id
+const idSchema = joi.number().integer().min(1);
 
 // Create new user
 export const createUser = async (req: Request, res: Response): Promise<any> => {
@@ -94,12 +93,12 @@ export const getALLUsers = async (req: Request, res: Response): Promise<any> =>
 
 // Get a specific user
 export const getUser = async (req: Request, res: Response): Promise<any> => {
-  // check if user id valid or not
-  if (!isPositiveInteger(req.params.userId)) {
-    return res.status(400).json({
-      error: "Invalid user ID",
-      message: "user ID must be a positive integer",
-    });
+  // Validate userID using Joi
+  const { error } = idSchema.validate(req.params.userId);
+  if (error) {
+    return res
+      .status(400)
+      .json({ message: "user ID must be a positive integer" });
   }
 
   // get user id from URL
@@ -121,12 +120,12 @@ export const getUser = async (req: Request, res: Response): Promise<any> => {
 
 // Update a specific user
 export const updateUser = async (req: Request, res: Response): Promise<any> => {
-  // check if user id valid or not
-  if (!isPositiveInteger(req.params.userId)) {
-    return res.status(400).json({
-      error: "Invalid user ID",
-      message: "user ID must be a positive integer",
-    });
+  // Validate userID using Joi
+  const { error: err } = idSchema.validate(req.params.userId);
+  if (err) {
+    return res
+      .status(400)
+      .json({ message: "user ID must be a positive integer" });
   }
 
   // get user id from URL
@@ -177,12 +176,12 @@ export const updateUser = async (req: Request, res: Response): Promise<any> => {
 
 // Delete a specific user
 export const deleteUser = async (req: Request, res: Response): Promise<any> => {
-  // check if user id valid or not
-  if (!isPositiveInteger(req.params.userId)) {
-    return res.status(400).json({
-      error: "Invalid user ID",
-      message: "user ID must be a positive integer",
-    });
+  // Validate userID using Joi
+  const { error: err } = idSchema.validate(req.params.userId);
+  if (err) {
+    return res
+      .status(400)
+      .json({ message: "user ID must be a positive integer" });
   }
 
   // get user id from URL
@@ -242,12 +241,12 @@ export const getALLPosts = async (req: Request, res: Response): Promise<any> =>
 
 // Gett a specific post
 export const getPost = async (req: Request, res: Response): Promise<any> => {
-  // check if post id valid or not
-  if (!isPositiveInteger(req.params.postId)) {
-    return res.status(400).json({
-      error: "Invalid post ID",
-      message: "post ID must be a positive integer",
-    });
+  // Validate postID using Joi
+  const { error: err } = idSchema.validate(req.params.postId);
+  if (err) {
+    return res
+      .status(400)
+      .json({ message: "post ID must be a positive integer" });
   }
 
   // get user id from URL
@@ -268,12 +267,12 @@ export const getPost = async (req: Request, res: Response): Promise<any> => {
 
 // Update a specific post
 export const updatePost = async (req: Request, res: Response): Promise<any> => {
-  // check if post id valid or not
-  if (!isPositiveInteger(req.params.postId)) {
-    return res.status(400).json({
-      error: "Invalid post ID",
-      message: "post ID must be a positive integer",
-    });
+  // Validate postID using Joi
+  const { error: err } = idSchema.validate(req.params.postId);
+  if (err) {
+    return res
+      .status(400)
+      .json({ message: "post ID must be a positive integer" });
   }
 
   // get post id from URL
@@ -316,12 +315,12 @@ export const updatePost = async (req: Request, res: Response): Promise<any> => {
 
 // Delete a specific post
 export const deletePost = async (req: Request, res: Response): Promise<any> => {
-  // check if post id valid or not
-  if (!isPositiveInteger(req.params.postId)) {
-    return res.status(400).json({
-      error: "Invalid post ID",
-      message: "post ID must be a positive integer",
-    });
+  // Validate postID using Joi
+  const { error: err } = idSchema.validate(req.params.postId);
+  if (err) {
+    return res
+      .status(400)
+      .json({ message: "post ID must be a positive integer" });
   }
 
   // get user id from URL
@@ -349,12 +348,12 @@ export const createCategory = async (
   req: Request,
   res: Response
 ): Promise<any> => {
-  // check if post id valid or not
-  if (!isPositiveInteger(req.params.postId)) {
-    return res.status(400).json({
-      error: "Invalid post ID",
-      message: "post ID must be a positive integer",
-    });
+  // Validate postID using Joi
+  const { error: err } = idSchema.validate(req.params.postId);
+  if (err) {
+    return res
+      .status(400)
+      .json({ message: "post ID must be a positive integer" });
   }
 
   // get post id from URL
@@ -399,12 +398,12 @@ export const getCategories = async (
   req: Request,
   res: Response
 ): Promise<any> => {
-  // check if post id valid or not
-  if (!isPositiveInteger(req.params.postId)) {
-    return res.status(400).json({
-      error: "Invalid post ID",
-      message: "post ID must be a positive integer",
-    });
+  // Validate postID using Joi
+  const { error: err } = idSchema.validate(req.params.postId);
+  if (err) {
+    return res
+      .status(400)
+      .json({ message: "post ID must be a positive integer" });
   }
 
   // get post id from URL
@@ -428,12 +427,12 @@ export const createComment = async (
   req: Request,
   res: Response
 ): Promise<any> => {
-  // check if post id valid or not
-  if (!isPositiveInteger(req.params.postId)) {
-    return res.status(400).json({
-      error: "Invalid post ID",
-      message: "post ID must be a positive integer",
-    });
+  // Validate postID using Joi
+  const { error: err } = idSchema.validate(req.params.postId);
+  if (err) {
+    return res
+      .status(400)
+      .json({ message: "post ID must be a positive integer" });
   }
 
   // get post id from URL
@@ -469,12 +468,12 @@ export const getComments = async (
   req: Request,
   res: Response
 ): Promise<any> => {
-  // check if post id valid or not
-  if (!isPositiveInteger(req.params.postId)) {
-    return res.status(400).json({
-      error: "Invalid post ID",
-      message: "post ID must be a positive integer",
-    });
+  // Validate postID using Joi
+  const { error: err } = idSchema.validate(req.params.postId);
+  if (err) {
+    return res
+      .status(400)
+      .json({ message: "post ID must be a positive integer" });
   }
 
   // get post id from URL
