@@ -97,82 +97,109 @@ describe("Post API Endpoints", () => {
     expect(response.body[0].comments.length).toBe(0);
   });
 
-  // // Test5
-  // it("should return a specific user", async () => {
-  //   const response = await request(app).get("/users/1");
+  // Test4
+  it("should return a specific post", async () => {
+    const posts = await request(app).get("/posts");
 
-  //   expect(response.status).toBe(200);
-  //   expect(response.body).toHaveProperty("userID", 1);
-  //   expect(response.body).toHaveProperty("userName", "Amr");
-  //   expect(response.body).toHaveProperty("email", "amr@gmail.com");
-  // });
+    const response = await request(app).get(`/posts/${posts.body[0].postID}`);
 
-  // // Test6
-  // it("should return error when getting a user that does not exist", async () => {
-  //   const response = await request(app).get("/users/999");
+    expect(response.status).toBe(200);
+    expect(response.body).toHaveProperty("title", "sucess");
+    expect(response.body).toHaveProperty("content", "hello");
+    expect(response.body.user).toHaveProperty("userID", 1);
+    expect(response.body.user).toHaveProperty("userName", "Amr");
+    expect(response.body.user).toHaveProperty("email", "amr@gmail.com");
+    expect(Array.isArray(response.body.categories)).toBe(true);
+    expect(response.body.categories.length).toBe(0);
+    expect(Array.isArray(response.body.comments)).toBe(true);
+    expect(response.body.comments.length).toBe(0);
+  });
 
-  //   expect(response.status).toBe(404);
-  //   expect(response.body).toHaveProperty("error", "User not found");
-  //   expect(response.body).toHaveProperty(
-  //     "message",
-  //     "the user you are trying to fetch doest not exists"
-  //   );
-  // });
+  // Test5
+  it("should delete the post", async () => {
+    const posts = await request(app).get("/posts");
 
-  // // Test7
-  // it("should update the user information", async () => {
-  //   const response = await request(app).put("/users/1").send({
-  //     userName: "Ahmad",
-  //     email: "ahmad@gmail.com",
-  //     password: "ahmad1234!@#$",
-  //   });
+    const response = await request(app).delete(
+      `/posts/${posts.body[0].postID}`
+    );
 
-  //   expect(response.status).toBe(200);
-  //   expect(response.body).toHaveProperty(
-  //     "message",
-  //     "User updated successfully"
-  //   );
-  //   expect(response.body.user).toHaveProperty("userID", 1);
-  //   expect(response.body.user).toHaveProperty("userName", "Ahmad");
-  //   expect(response.body.user).toHaveProperty("email", "ahmad@gmail.com");
-  // });
+    expect(response.status).toBe(200);
+    expect(response.body).toHaveProperty(
+      "message",
+      "Post deleted successfully"
+    );
+  });
 
-  // // Test8
-  // it("should return error when updating a user that does not exist", async () => {
-  //   const response = await request(app).put("/users/999").send({
-  //     userName: "Ahmad",
-  //     email: "ahmad@gmail.com",
-  //     password: "ahmad1234!@#$",
-  //   });
+  // Test6
+  it("should return error when deleteing a post that does not exist", async () => {
+    const response = await request(app).delete("/posts/999");
 
-  //   expect(response.status).toBe(404);
-  //   expect(response.body).toHaveProperty("error", "User not found");
-  //   expect(response.body).toHaveProperty(
-  //     "message",
-  //     "the user that you are trying to update their information does not exists"
-  //   );
-  // });
+    expect(response.status).toBe(404);
+    expect(response.body).toHaveProperty("error", "Post not found");
+    expect(response.body).toHaveProperty(
+      "message",
+      "the post you are trying to delete already not exists"
+    );
+  });
 
-  // // Test9
-  // it("should delete the user", async () => {
-  //   const response = await request(app).delete("/users/1");
+  // Test7
+  it("should return error when getting a post that does not exist", async () => {
+    const response = await request(app).get("/posts/999");
 
-  //   expect(response.status).toBe(200);
-  //   expect(response.body).toHaveProperty(
-  //     "message",
-  //     "User deleted successfully"
-  //   );
-  // });
+    expect(response.status).toBe(404);
+    expect(response.body).toHaveProperty("error", "Post not found");
+    expect(response.body).toHaveProperty(
+      "message",
+      "the post you are trying to fetch doest not exists"
+    );
+  });
 
-  // // Test10
-  // it("should return error when deleteing a user that does not exist", async () => {
-  //   const response = await request(app).delete("/users/999");
+  // Test8
+  it("should return error when updating a post that does not exist", async () => {
+    const response = await request(app).put(`/posts/999`).send({
+      title: "fail",
+      content: "nooooooooo",
+    });
 
-  //   expect(response.status).toBe(404);
-  //   expect(response.body).toHaveProperty("error", "User not found");
-  //   expect(response.body).toHaveProperty(
-  //     "message",
-  //     "the user you are trying to delete already not exists"
-  //   );
-  // });
+    expect(response.status).toBe(404);
+    expect(response.body).toHaveProperty("error", "Post not found");
+    expect(response.body).toHaveProperty(
+      "message",
+      "the post that you are trying to update their information does not exists"
+    );
+  });
+
+  // Test9
+  it("should update the post information", async () => {
+    await request(app).post("/users").send({
+      userID: 1,
+      userName: "Amr",
+      email: "amr@gmail.com",
+      password: "asdsad123455666",
+    });
+
+    const post = await request(app).post("/posts").send({
+      userID: 1,
+      title: "sucess",
+      content: "hello",
+    });
+
+    const response = await request(app)
+      .put(`/posts/${post.body.post.postID}`)
+      .send({
+        title: "fail",
+        content: "nooooooooo",
+      });
+
+    expect(response.status).toBe(200);
+    expect(response.body).toHaveProperty(
+      "message",
+      "Post updated successfully"
+    );
+    expect(response.body.post).toHaveProperty("title", "fail");
+    expect(response.body.post).toHaveProperty("content", "nooooooooo");
+    expect(response.body.post.user).toHaveProperty("userID", 1);
+    expect(response.body.post.user).toHaveProperty("userName", "Amr");
+    expect(response.body.post.user).toHaveProperty("email", "amr@gmail.com");
+  });
 });
