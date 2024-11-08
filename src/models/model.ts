@@ -9,7 +9,7 @@ export const sequelize = new Sequelize("blogging_system", "root", "Amr1234", {
 });
 
 // Define the User model
-export const User = sequelize.define(
+const User = sequelize.define(
   "user",
   {
     userID: {
@@ -105,7 +105,7 @@ export const deleteUser = async (userID: number): Promise<any> =>
   });
 
 // Define the Category model
-export const Category = sequelize.define(
+const Category = sequelize.define(
   "category",
   {
     categoryID: {
@@ -134,7 +134,7 @@ export const Category = sequelize.define(
 );
 
 // Define the Post model
-export const Post = sequelize.define(
+const Post = sequelize.define(
   "post",
   {
     userID: {
@@ -175,7 +175,7 @@ export const Post = sequelize.define(
 );
 
 // Define the Post_Category model
-export const Post_Category = sequelize.define(
+const Post_Category = sequelize.define(
   "post_category",
   {
     postID: {
@@ -338,7 +338,7 @@ export const getCategories = async (postID: number): Promise<any> => {
 };
 
 // Define the Comment model
-export const Comment = sequelize.define(
+const Comment = sequelize.define(
   "comment",
   {
     userID: {

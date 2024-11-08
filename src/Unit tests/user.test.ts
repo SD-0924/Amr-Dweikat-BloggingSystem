@@ -2,7 +2,7 @@
 import request from "supertest";
 
 // import database configuration and models from model module
-import { sequelize, User } from "../models/model";
+import { sequelize } from "../models/model";
 
 // Import express module
 import express from "express";
@@ -14,7 +14,7 @@ import { invalidRoute, invalidJSON } from "../utils/errorHandler";
 import route from "../routes/route";
 
 // Initialize an Express application
-export const app = express();
+const app = express();
 
 // Handle existing routes after base URL
 app.use(route);
@@ -25,17 +25,18 @@ app.use(invalidRoute);
 // Middleware to handle invalid JSON structure
 app.use(invalidJSON);
 
+// Reset DB before test suite
 beforeAll(async () => {
-  // Reset DB before each test
   await sequelize.sync({ force: true });
 });
 
+// Close the connection after test suite
 afterAll(async () => {
-  // Close the connection after tests
   await sequelize.close();
 });
 
 describe("User API Endpoints", () => {
+  // Test1
   it("should create a new user", async () => {
     const response = await request(app).post("/users").send({
       userID: 1,
@@ -53,8 +54,8 @@ describe("User API Endpoints", () => {
     expect(response.body.user).toHaveProperty("userName", "Amr");
     expect(response.body.user).toHaveProperty("email", "amr@gmail.com");
   });
-
-  it("should not create a new user because invalid userID", async () => {
+  // Test2
+  it("should return error when creating a user with invalid id", async () => {
     const response = await request(app).post("/users").send({
       userID: "1",
       userName: "Amr",
@@ -69,23 +70,22 @@ describe("User API Endpoints", () => {
       "'userID' must be a number"
     );
   });
+  // Test3
+  it("should return error when creating a user with existing email", async () => {
+    const response = await request(app).post("/users").send({
+      userID: 2,
+      userName: "Ez",
+      email: "amr@gmail.com",
+      password: "asdsad123455666",
+    });
 
-  //   it("should return error when creating a user with existing email", async () => {
-  //     await User.create({ name: "Jane Doe", email: "jane@example.com" });
-
-  //     const response = await request(app)
-  //       .post("/api/users")
-  //       .send({ name: "John Doe", email: "jane@example.com" });
-
-  //     expect(response.status).toBe(500);
-  //     expect(response.body).toHaveProperty("error");
-  //   });
-
-  //   it("should delete a user", async () => {
-  //     const user = await User.create({
-  //       name: "Test User",
-  //       email: "test@example.com",
-  //     });
+    expect(response.status).toBe(400);
+    expect(response.body).toHaveProperty("error", "Invalid body request");
+    expect(response.body).toHaveProperty(
+      "message",
+      "the email you are trying to use is already associated with another user"
+    );
+  });
 
   //     const response = await request(app).delete(`/api/users/${user.id}`);
 
