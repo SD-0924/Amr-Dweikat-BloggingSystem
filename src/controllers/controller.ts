@@ -229,6 +229,7 @@ export const createPost = async (req: Request, res: Response): Promise<any> => {
   const { dataValues: newPost } = await model.createPost(req.body);
   delete newPost["userID"];
   newPost["user"] = user;
+  delete newPost["user"].dataValues["password"];
   res.status(201).json({
     message: "Post created successfully",
     post: newPost,
