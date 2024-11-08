@@ -86,22 +86,4 @@ describe("User API Endpoints", () => {
       "the email you are trying to use is already associated with another user"
     );
   });
-
-  //     const response = await request(app).delete(`/api/users/${user.id}`);
-
-  //     expect(response.status).toBe(200);
-  //     expect(response.body).toHaveProperty(
-  //       "message",
-  //       "User deleted successfully"
-  //     );
-  //   });
-
-  //   it("should return error if user not found during deletion", async () => {
-  //     const response = await request(app).delete("/api/users/99999"); // Non-existent user ID
-
-  //     expect(response.status).toBe(404);
-  //     expect(response.body).toHaveProperty("error", "User not found");
-  //   });
-
-  // end descripe
 });
