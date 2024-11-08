@@ -86,4 +86,88 @@ describe("User API Endpoints", () => {
       "the email you are trying to use is already associated with another user"
     );
   });
+  // Test4
+  it("should return all users", async () => {
+    const response = await request(app).get("/users");
+
+    expect(response.status).toBe(200);
+    expect(Array.isArray(response.body)).toBe(true);
+    expect(response.body.length).toBe(1);
+    expect(response.body[0]).toHaveProperty("userID", 1);
+    expect(response.body[0]).toHaveProperty("userName", "Amr");
+    expect(response.body[0]).toHaveProperty("email", "amr@gmail.com");
+  });
+  // Test5
+  it("should return a specific user", async () => {
+    const response = await request(app).get("/users/1");
+
+    expect(response.status).toBe(200);
+    expect(response.body).toHaveProperty("userID", 1);
+    expect(response.body).toHaveProperty("userName", "Amr");
+    expect(response.body).toHaveProperty("email", "amr@gmail.com");
+  });
+  // Test6
+  it("should return error when getting a user that does not exist", async () => {
+    const response = await request(app).get("/users/999");
+
+    expect(response.status).toBe(404);
+    expect(response.body).toHaveProperty("error", "User not found");
+    expect(response.body).toHaveProperty(
+      "message",
+      "the user you are trying to fetch doest not exists"
+    );
+  });
+  // Test7
+  it("should update the user information", async () => {
+    const response = await request(app).put("/users/1").send({
+      userName: "Ahmad",
+      email: "ahmad@gmail.com",
+      password: "ahmad1234!@#$",
+    });
+
+    expect(response.status).toBe(200);
+    expect(response.body).toHaveProperty(
+      "message",
+      "User updated successfully"
+    );
+    expect(response.body.user).toHaveProperty("userID", 1);
+    expect(response.body.user).toHaveProperty("userName", "Ahmad");
+    expect(response.body.user).toHaveProperty("email", "ahmad@gmail.com");
+  });
+  // Test8
+  it("should return error when updating a user that does not exist", async () => {
+    const response = await request(app).put("/users/999").send({
+      userName: "Ahmad",
+      email: "ahmad@gmail.com",
+      password: "ahmad1234!@#$",
+    });
+
+    expect(response.status).toBe(404);
+    expect(response.body).toHaveProperty("error", "User not found");
+    expect(response.body).toHaveProperty(
+      "message",
+      "the user that you are trying to update their information does not exists"
+    );
+  });
+  // Test9
+  it("should delete the user", async () => {
+    const response = await request(app).delete("/users/1");
+
+    expect(response.status).toBe(200);
+    expect(response.body).toHaveProperty(
+      "message",
+      "User deleted successfully"
+    );
+  });
+  // Test10
+  it("should return error when deleteing a user that does not exist", async () => {
+    const response = await request(app).delete("/users/999");
+
+    expect(response.status).toBe(404);
+    expect(response.body).toHaveProperty("error", "User not found");
+    expect(response.body).toHaveProperty(
+      "message",
+      "the user you are trying to delete already not exists"
+    );
+  });
 });
