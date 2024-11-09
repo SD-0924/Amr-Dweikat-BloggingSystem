@@ -407,27 +407,3 @@ export const getComments = async (postID: number): Promise<any> =>
       postID: postID,
     },
   });
-
-// associations
-
-// User and Post models
-User.hasMany(Post, { foreignKey: "userID" });
-Post.belongsTo(User, { foreignKey: "userID" });
-
-// User and Comment models
-User.hasMany(Comment, { foreignKey: "userID" });
-Comment.belongsTo(User, { foreignKey: "userID" });
-
-// Post and Comment models
-Post.hasMany(Comment, { foreignKey: "postID" });
-Comment.belongsTo(Post, { foreignKey: "postID" });
-
-// Post and Category models
-Post.belongsToMany(Category, {
-  through: "Post_Category",
-  foreignKey: "postID",
-});
-Category.belongsToMany(Post, {
-  through: "Post_Category",
-  foreignKey: "categoryID",
-});
