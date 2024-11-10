@@ -26,10 +26,10 @@ app.use("/users", userRoutes);
 
 // Reset DB before test suite
 beforeAll(async () => {
-  await User.destroy({ where: {}, force: true });
-  await Post.destroy({ where: {}, force: true });
-  await Category.destroy({ where: {}, force: true });
-  await PostCategory.destroy({ where: {}, force: true });
+  await User.destroy({ where: {} });
+  await Post.destroy({ where: {} });
+  await Category.destroy({ where: {} });
+  await PostCategory.destroy({ where: {} });
 });
 
 // Close the connection after test suite
