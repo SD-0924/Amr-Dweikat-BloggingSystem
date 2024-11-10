@@ -21,9 +21,13 @@ app.use("/users", userRoutes);
 
 // Reset DB before test suite
 beforeAll(async () => {
-  await sequelize.query("SET FOREIGN_KEY_CHECKS = 0;");
-  await User.destroy({ where: {} });
-  await sequelize.query("SET FOREIGN_KEY_CHECKS = 1;");
+  try {
+    await sequelize.query("SET FOREIGN_KEY_CHECKS = 0;");
+    await User.destroy({ where: {} });
+    await sequelize.query("SET FOREIGN_KEY_CHECKS = 1;");
+  } catch (error) {
+    console.error("Error during cleanup:", error);
+  }
 });
 
 // Close the connection after test suite
