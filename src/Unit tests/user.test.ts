@@ -4,9 +4,6 @@ import request from "supertest";
 // import database configuration
 import { sequelize } from "../config/db";
 
-// Import models
-import { User } from "../models/userModel";
-
 // Import express module
 import express from "express";
 

@@ -7,10 +7,6 @@ import { sequelize } from "../config/db";
 // Import express module
 import express from "express";
 
-// Import models
-import { User } from "../models/userModel";
-import { Post } from "../models/postModel";
-
 // Import Router method
 import { postRoutes } from "../routes/postRoutes";
 import { userRoutes } from "../routes/userRoutes";
@@ -24,10 +20,13 @@ app.use("/users", userRoutes);
 
 // Reset DB before test suite
 beforeAll(async () => {
-  await sequelize.query("SET FOREIGN_KEY_CHECKS = 0;");
-  await User.destroy({ where: {} });
-  await Post.destroy({ where: {} });
-  await sequelize.query("SET FOREIGN_KEY_CHECKS = 1;");
+  try {
+    await sequelize.query("SET FOREIGN_KEY_CHECKS = 0;");
+    await sequelize.sync({ force: true });
+    await sequelize.query("SET FOREIGN_KEY_CHECKS = 1;");
+  } catch (error) {
+    console.error("Error during cleanup:", error);
+  }
 });
 
 // Close the connection after test suite

@@ -57,7 +57,7 @@ jobs:
         run: chmod +x node_modules/.bin/jest
 
       - name: Run tests
-        run: npx jest -t "User API Endpoints"
+        run: npx jest --runInBand
         env:
           DB_HOST: 127.0.0.1
           DB_USER: root
