@@ -5,7 +5,8 @@ import express from "express";
 import { invalidRoute, invalidJSON } from "./utils/errorHandler";
 
 // Import Router method
-import route from "./routes/route";
+import { userRoutes } from "./routes/userRoutes";
+import { postRoutes } from "./routes/postRoutes";
 
 // Initialize an Express application
 export const app = express();
@@ -14,8 +15,9 @@ export const app = express();
 const HOSTNAME = "localhost";
 const PORT = 3000;
 
-// Handle existing routes after base URL
-app.use(route);
+// Handle existing routes
+app.use("/users", userRoutes);
+app.use("/posts", postRoutes);
 
 // Middleware to handle invalid routes
 app.use(invalidRoute);
