@@ -2,32 +2,34 @@
 import request from "supertest";
 
 // import database configuration and models from model module
-import { sequelize } from "../models/model";
+import { sequelize } from "../config/db";
 
 // Import express module
 import express from "express";
 
-// Import all error handler methods from errorHandler module
-import { invalidRoute, invalidJSON } from "../utils/errorHandler";
+// Import models
+import { User } from "../models/userModel";
+import { Post } from "../models/postModel";
+import { Category } from "../models/categoryModel";
+import { PostCategory } from "../models/postCategoryModel";
 
 // Import Router method
-import route from "../routes/route";
+import { postRoutes } from "../routes/postRoutes";
+import { userRoutes } from "../routes/userRoutes";
 
 // Initialize an Express application
 const app = express();
 
 // Handle existing routes after base URL
-app.use(route);
-
-// Middleware to handle invalid routes
-app.use(invalidRoute);
-
-// Middleware to handle invalid JSON structure
-app.use(invalidJSON);
+app.use("/posts", postRoutes);
+app.use("/users", userRoutes);
 
 // Reset DB before test suite
 beforeAll(async () => {
-  await sequelize.sync({ force: true });
+  await User.destroy({ where: {}, force: true });
+  await Post.destroy({ where: {}, force: true });
+  await Category.destroy({ where: {}, force: true });
+  await PostCategory.destroy({ where: {}, force: true });
 });
 
 // Close the connection after test suite
@@ -38,21 +40,24 @@ afterAll(async () => {
 describe("Category API Endpoints", () => {
   // Test1
   it("should create a new category", async () => {
-    await request(app).post("/users").send({
-      userID: 1,
+    const userInfo = await request(app).post("/users").send({
       userName: "Amr",
       email: "amr@gmail.com",
       password: "asdsad123455666",
     });
 
-    const post = await request(app).post("/posts").send({
-      userID: 1,
+    expect(userInfo.status).toBe(201);
+
+    const postInfo = await request(app).post("/posts").send({
+      userId: userInfo.body.user.id,
       title: "sucess",
       content: "hello",
     });
 
+    expect(postInfo.status).toBe(201);
+
     const response = await request(app)
-      .post(`/posts/${post.body.post.postID}/categories`)
+      .post(`/posts/${postInfo.body.post.id}/categories`)
       .send({
         name: "strong",
       });
@@ -84,7 +89,7 @@ describe("Category API Endpoints", () => {
     const post = await request(app).get("/posts").send();
 
     const response = await request(app)
-      .post(`/posts/${post.body[0].postID}/categories`)
+      .post(`/posts/${post.body[0].id}/categories`)
       .send({
         name: "strong",
       });
@@ -99,14 +104,20 @@ describe("Category API Endpoints", () => {
 
   // Test4
   it("should return all categories for a specific post", async () => {
-    const post = await request(app).get("/posts").send();
+    const postInfo = await request(app).get("/posts").send();
 
-    await request(app).post(`/posts/${post.body[0].postID}/categories`).send({
-      name: "weak",
-    });
+    expect(postInfo.status).toBe(200);
+
+    const categoryInfo = await request(app)
+      .post(`/posts/${postInfo.body[0].id}/categories`)
+      .send({
+        name: "weak",
+      });
+
+    expect(categoryInfo.status).toBe(201);
 
     const response = await request(app).get(
-      `/posts/${post.body[0].postID}/categories`
+      `/posts/${postInfo.body[0].id}/categories`
     );
 
     expect(response.status).toBe(200);

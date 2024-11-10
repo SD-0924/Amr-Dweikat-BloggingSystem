@@ -22,20 +22,20 @@ postRoutes.delete("/:postId", postController.deletePost);
 
 // Route for create category for a specific post
 postRoutes.post(
-  "/posts/:postId/categories",
+  "/:postId/categories",
   express.json(),
   categoryController.createCategory
 );
 
 // Route for get all categories realted to specific post
-postRoutes.get("/posts/:postId/categories", categoryController.getCategories);
+postRoutes.get("/:postId/categories", categoryController.getCategories);
 
 // Route for create comment for a specific post
 postRoutes.post(
-  "/posts/:postId/comments",
+  "/:postId/comments",
   express.json(),
   commentController.createComment
 );
 
 // Route for get all comments realted to specific post
-postRoutes.get("/posts/:postId/comments", commentController.getComments);
+postRoutes.get("/:postId/comments", commentController.getComments);

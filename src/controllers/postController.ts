@@ -39,7 +39,7 @@ export const createPost = async (req: Request, res: Response): Promise<any> => {
   }
 
   // check if user exist or not
-  const user = await User.findByPk(req.body.userID);
+  const user = await User.findByPk(req.body.userId);
   if (!user) {
     return res.status(404).json({
       error: "User not found",

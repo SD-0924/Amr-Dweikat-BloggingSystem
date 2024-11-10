@@ -122,5 +122,5 @@ export const getCategories = async (
   for (const category of categories) {
     result.push(await Category.findByPk(category.dataValues.categoryId));
   }
-  res.status(200).json(categories);
+  res.status(200).json(result);
 };

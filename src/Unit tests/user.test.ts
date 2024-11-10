@@ -1,33 +1,27 @@
 // import supertest module to test express routes
 import request from "supertest";
 
-// import database configuration and models from model module
-import { sequelize } from "../models/model";
+// import database configuration
+import { sequelize } from "../config/db";
+
+// Import models
+import { User } from "../models/userModel";
 
 // Import express module
 import express from "express";
 
-// Import all error handler methods from errorHandler module
-import { invalidRoute, invalidJSON } from "../utils/errorHandler";
-
 // Import Router method
-import route from "../routes/route";
+import { userRoutes } from "../routes/userRoutes";
 
 // Initialize an Express application
 const app = express();
 
 // Handle existing routes after base URL
-app.use(route);
-
-// Middleware to handle invalid routes
-app.use(invalidRoute);
-
-// Middleware to handle invalid JSON structure
-app.use(invalidJSON);
+app.use("/users", userRoutes);
 
 // Reset DB before test suite
 beforeAll(async () => {
-  await sequelize.sync({ force: true });
+  await User.destroy({ where: {}, force: true });
 });
 
 // Close the connection after test suite
@@ -39,7 +33,6 @@ describe("User API Endpoints", () => {
   // Test1
   it("should create a new user", async () => {
     const response = await request(app).post("/users").send({
-      userID: 1,
       userName: "Amr",
       email: "amr@gmail.com",
       password: "asdsad123455666",
@@ -50,16 +43,14 @@ describe("User API Endpoints", () => {
       "message",
       "User created successfully"
     );
-    expect(response.body.user).toHaveProperty("userID", 1);
     expect(response.body.user).toHaveProperty("userName", "Amr");
     expect(response.body.user).toHaveProperty("email", "amr@gmail.com");
   });
 
   // Test2
-  it("should return error when creating a user with invalid id", async () => {
+  it("should return error when creating a user with invalid name", async () => {
     const response = await request(app).post("/users").send({
-      userID: "1",
-      userName: "Amr",
+      userName: 1,
       email: "amr@gmail.com",
       password: "asdsad123455666",
     });
@@ -68,14 +59,13 @@ describe("User API Endpoints", () => {
     expect(response.body).toHaveProperty("error", "Invalid body request");
     expect(response.body).toHaveProperty(
       "message",
-      "'userID' must be a number"
+      "'userName' must be a string"
     );
   });
 
   // Test3
   it("should return error when creating a user with existing email", async () => {
     const response = await request(app).post("/users").send({
-      userID: 2,
       userName: "Ez",
       email: "amr@gmail.com",
       password: "asdsad123455666",
@@ -96,17 +86,20 @@ describe("User API Endpoints", () => {
     expect(response.status).toBe(200);
     expect(Array.isArray(response.body)).toBe(true);
     expect(response.body.length).toBe(1);
-    expect(response.body[0]).toHaveProperty("userID", 1);
     expect(response.body[0]).toHaveProperty("userName", "Amr");
     expect(response.body[0]).toHaveProperty("email", "amr@gmail.com");
   });
 
   // Test5
   it("should return a specific user", async () => {
-    const response = await request(app).get("/users/1");
+    const users = await request(app).get("/users");
+
+    expect(users.status).toBe(200);
+
+    const response = await request(app).get(`/users/${users.body[0].id}`);
 
     expect(response.status).toBe(200);
-    expect(response.body).toHaveProperty("userID", 1);
+    expect(response.body).toHaveProperty("id", users.body[0].id);
     expect(response.body).toHaveProperty("userName", "Amr");
     expect(response.body).toHaveProperty("email", "amr@gmail.com");
   });
@@ -125,7 +118,11 @@ describe("User API Endpoints", () => {
 
   // Test7
   it("should update the user information", async () => {
-    const response = await request(app).put("/users/1").send({
+    const users = await request(app).get("/users");
+
+    expect(users.status).toBe(200);
+
+    const response = await request(app).put(`/users/${users.body[0].id}`).send({
       userName: "Ahmad",
       email: "ahmad@gmail.com",
       password: "ahmad1234!@#$",
@@ -136,7 +133,7 @@ describe("User API Endpoints", () => {
       "message",
       "User updated successfully"
     );
-    expect(response.body.user).toHaveProperty("userID", 1);
+    expect(response.body.user).toHaveProperty("id", users.body[0].id);
     expect(response.body.user).toHaveProperty("userName", "Ahmad");
     expect(response.body.user).toHaveProperty("email", "ahmad@gmail.com");
   });
@@ -159,7 +156,11 @@ describe("User API Endpoints", () => {
 
   // Test9
   it("should delete the user", async () => {
-    const response = await request(app).delete("/users/1");
+    const users = await request(app).get("/users");
+
+    expect(users.status).toBe(200);
+
+    const response = await request(app).delete(`/users/${users.body[0].id}`);
 
     expect(response.status).toBe(200);
     expect(response.body).toHaveProperty(
