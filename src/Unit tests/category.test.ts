@@ -26,10 +26,12 @@ app.use("/users", userRoutes);
 
 // Reset DB before test suite
 beforeAll(async () => {
+  await sequelize.query("SET FOREIGN_KEY_CHECKS = 0;");
   await User.destroy({ where: {} });
   await Post.destroy({ where: {} });
   await Category.destroy({ where: {} });
   await PostCategory.destroy({ where: {} });
+  await sequelize.query("SET FOREIGN_KEY_CHECKS = 1;");
 });
 
 // Close the connection after test suite
