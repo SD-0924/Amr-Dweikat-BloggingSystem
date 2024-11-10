@@ -30,7 +30,7 @@ export const Post = sequelize.define(
   },
   {
     tableName: "post",
-    timestamps: false,
+    timestamps: true,
   }
 );
 

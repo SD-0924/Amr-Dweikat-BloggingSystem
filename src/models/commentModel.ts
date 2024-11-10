@@ -27,7 +27,7 @@ export const Comment = sequelize.define(
   },
   {
     tableName: "comment",
-    timestamps: false,
+    timestamps: true,
   }
 );
 // Set up the 1-to-many relationship between user and comment
