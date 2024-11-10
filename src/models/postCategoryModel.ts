@@ -29,5 +29,13 @@ export const PostCategory = sequelize.define(
 );
 
 // Set up the Many-to-Many relationship between post and category
-Post.belongsToMany(Category, { through: PostCategory });
-Category.belongsToMany(Post, { through: PostCategory });
+Post.belongsToMany(Category, {
+  through: PostCategory,
+  foreignKey: "postId",
+  otherKey: "categoryId",
+});
+Category.belongsToMany(Post, {
+  through: PostCategory,
+  foreignKey: "categoryId",
+  otherKey: "postId",
+});
