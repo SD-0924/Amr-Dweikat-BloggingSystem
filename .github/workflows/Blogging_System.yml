@@ -57,5 +57,9 @@ jobs:
         run: chmod +x node_modules/.bin/jest
 
       - name: Run tests
-        run: |
-          npx jest --runInBand
+        run: npx jest --runInBand
+        env:
+          DB_HOST: 127.0.0.1
+          DB_USER: root
+          DB_PASS: Amr1234
+          DB_NAME: blogging_system
