@@ -22,9 +22,20 @@ app.use("/users", userRoutes);
 // Reset DB before test suite
 beforeAll(async () => {
   try {
+    console.log("Connecting to the database...");
+    await sequelize.authenticate(); // Ensure DB connection is working
+    console.log("Database connection successful.");
+
+    console.log("Disabling foreign key checks...");
     await sequelize.query("SET FOREIGN_KEY_CHECKS = 0;");
+
+    console.log("Cleaning up data...");
     await User.destroy({ where: {} });
+
+    console.log("Re-enabling foreign key checks...");
     await sequelize.query("SET FOREIGN_KEY_CHECKS = 1;");
+
+    console.log("Cleanup successful.");
   } catch (error) {
     console.error("Error during cleanup:", error);
   }
