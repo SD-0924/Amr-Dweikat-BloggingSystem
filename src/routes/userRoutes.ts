@@ -1,5 +1,6 @@
 import express from "express";
 import * as userController from "../controllers/userController";
+import { authenticateJWT } from "../middleware/authMiddleware";
 
 export const userRoutes = express.Router();
 
@@ -13,10 +14,15 @@ userRoutes.post("/", express.json(), userController.createUser);
 userRoutes.get("/", userController.getALLUsers);
 
 // Route for get a specific user
-userRoutes.get("/:userId", userController.getUser);
+userRoutes.get("/:userId", authenticateJWT, userController.getUser);
 
 // Route for update a specific user
-userRoutes.put("/:userId", express.json(), userController.updateUser);
+userRoutes.put(
+  "/:userId",
+  authenticateJWT,
+  express.json(),
+  userController.updateUser
+);
 
 // Route for delete a specific user
-userRoutes.delete("/:userId", userController.deleteUser);
+userRoutes.delete("/:userId", authenticateJWT, userController.deleteUser);

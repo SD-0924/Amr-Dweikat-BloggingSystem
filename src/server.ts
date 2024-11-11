@@ -2,7 +2,7 @@
 import express from "express";
 
 // Import all error handler methods from errorHandler module
-import { invalidRoute, invalidJSON } from "./utils/errorHandler";
+import { invalidRoute, invalidJSON } from "./middleware/errorHandler";
 
 // Import Router method
 import { userRoutes } from "./routes/userRoutes";

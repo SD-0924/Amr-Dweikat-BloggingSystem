@@ -7,6 +7,11 @@ import { User } from "../models/userModel";
 // Import joi schema validator
 import joi from "joi";
 
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
+
+const JWT_SECRET = "my-secret-key";
+
 // Joi validation schema for user model
 const userSchema = joi.object({
   userName: joi.string().min(1).max(20).required(),
@@ -34,17 +39,33 @@ export const loginUser = async (req: Request, res: Response): Promise<any> => {
     });
   }
 
-  // Check if user exist or not
+  // Check credentials if valid or not
   const userInfo = await User.findOne({
     where: {
       email: req.body.email,
     },
   });
-  if (!userInfo) {
-    return res.status(404).json({
-      error: "User not found",
+  if (
+    !userInfo ||
+    !(await bcrypt.compare(req.body.password, userInfo.dataValues.password))
+  ) {
+    return res.status(401).json({
+      error: "error",
+      message: "Invalid email or password",
     });
   }
+
+  // return token to user
+  const token = jwt.sign(
+    {
+      id: userInfo.dataValues.id,
+      email: userInfo.dataValues.email,
+    },
+    JWT_SECRET,
+    { expiresIn: "15m" }
+  );
+
+  res.status(200).json({ message: "Login successful", token });
 };
 
 // Create new user
