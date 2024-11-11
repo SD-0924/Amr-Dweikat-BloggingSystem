@@ -57,7 +57,6 @@ export const createPost = async (req: Request, res: Response): Promise<any> => {
   });
   delete newPost["userId"];
   newPost["user"] = user;
-  delete newPost["user"].dataValues["password"];
   res.status(201).json({
     message: "Post created successfully",
     post: newPost,
@@ -74,7 +73,6 @@ export const getALLPosts = async (
 
   for (let post of posts) {
     post.dataValues["user"] = await User.findByPk(post.dataValues.userId);
-    delete post.dataValues["user"].dataValues["password"];
     const categories = await PostCategory.findAll({
       where: {
         postId: post.dataValues.id,
@@ -126,7 +124,6 @@ export const getPost = async (req: Request, res: Response): Promise<any> => {
   const post = await Post.findByPk(postID);
   if (post) {
     post.dataValues["user"] = await User.findByPk(post.dataValues.userId);
-    delete post.dataValues["user"].dataValues["password"];
     const categories = await PostCategory.findAll({
       where: {
         postId: post.dataValues.id,
@@ -199,7 +196,6 @@ export const updatePost = async (req: Request, res: Response): Promise<any> => {
   const newPost = await Post.findByPk(postID);
   if (newPost) {
     newPost.dataValues["user"] = await User.findByPk(newPost.dataValues.userId);
-    delete newPost.dataValues["user"].dataValues["password"];
     const categories = await PostCategory.findAll({
       where: {
         postId: newPost.dataValues.id,

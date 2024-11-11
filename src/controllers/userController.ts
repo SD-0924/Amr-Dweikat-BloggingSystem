@@ -14,8 +14,38 @@ const userSchema = joi.object({
   email: joi.string().max(255).email().required(),
 });
 
+// Joi validation schema for user login
+const userLoginSchema = joi.object({
+  password: joi.string().min(8).max(20).required(),
+  email: joi.string().max(255).email().required(),
+});
+
 // Joi validation schema for userId property
 const userIdSchema = joi.number().integer().min(1);
+
+// Provide a token to user incase valid credentials
+export const loginUser = async (req: Request, res: Response): Promise<any> => {
+  // check if body request valid or not
+  const { error, value } = userLoginSchema.validate(req.body);
+  if (error) {
+    return res.status(400).json({
+      error: "Invalid body request",
+      message: error.details[0].message.replaceAll(`"`, `'`),
+    });
+  }
+
+  // Check if user exist or not
+  const userInfo = await User.findOne({
+    where: {
+      email: req.body.email,
+    },
+  });
+  if (!userInfo) {
+    return res.status(404).json({
+      error: "User not found",
+    });
+  }
+};
 
 // Create new user
 export const createUser = async (req: Request, res: Response): Promise<any> => {
@@ -49,7 +79,6 @@ export const createUser = async (req: Request, res: Response): Promise<any> => {
     password: req.body.password,
     email: req.body.email,
   });
-  delete newUser.dataValues["password"];
   res.status(201).json({
     message: "User created successfully",
     user: newUser,
@@ -62,9 +91,6 @@ export const getALLUsers = async (
   res: Response
 ): Promise<any> => {
   const users = await User.findAll();
-  for (const user of users) {
-    delete user.dataValues.password;
-  }
   res.status(200).json(users);
 };
 
@@ -84,7 +110,6 @@ export const getUser = async (req: Request, res: Response): Promise<any> => {
   // return user information if it is exist
   const user = await User.findByPk(userID);
   if (user) {
-    delete user.dataValues["password"];
     return res.status(200).json(user);
   }
 
@@ -153,7 +178,6 @@ export const updateUser = async (req: Request, res: Response): Promise<any> => {
 
   // fetch new user
   const newUser = await User.findByPk(userID);
-  delete newUser?.dataValues.password;
   res.status(200).json({
     message: "User updated successfully",
     user: newUser,

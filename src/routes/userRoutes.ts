@@ -3,6 +3,9 @@ import * as userController from "../controllers/userController";
 
 export const userRoutes = express.Router();
 
+// Route for login user
+userRoutes.post("/login", express.json(), userController.loginUser);
+
 // Route for create user
 userRoutes.post("/", express.json(), userController.createUser);
 
