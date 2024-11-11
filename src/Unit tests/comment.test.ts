@@ -11,6 +11,8 @@ import express from "express";
 import { postRoutes } from "../routes/postRoutes";
 import { userRoutes } from "../routes/userRoutes";
 
+import jwt from "jsonwebtoken";
+
 // Initialize an Express application
 const app = express();
 
@@ -34,27 +36,42 @@ afterAll(async () => {
   await sequelize.close();
 });
 
+// Helper function to generate a valid token
+function generateToken(payload: string | object | Buffer, expiresIn = "1h") {
+  return jwt.sign(payload, "my-secret-key", { expiresIn });
+}
+
 describe("Comment API Endpoints", () => {
+  // Generate a valid token
+  const validToken = generateToken({
+    email: "amr@gmail.com",
+    password: "Amr12341234",
+  });
+
   // Test1
   it("should create a new comment", async () => {
     const userInfo = await request(app).post("/users").send({
       userName: "Amr",
       email: "amr@gmail.com",
-      password: "asdsad123455666",
+      password: "Amr12341234",
     });
 
     expect(userInfo.status).toBe(201);
 
-    const postInfo = await request(app).post("/posts").send({
-      userId: userInfo.body.user.id,
-      title: "sucess",
-      content: "hello",
-    });
+    const postInfo = await request(app)
+      .post("/posts")
+      .set("Authorization", `Bearer ${validToken}`)
+      .send({
+        userId: userInfo.body.user.id,
+        title: "sucess",
+        content: "hello",
+      });
 
     expect(postInfo.status).toBe(201);
 
     const response = await request(app)
       .post(`/posts/${postInfo.body.post.id}/comments`)
+      .set("Authorization", `Bearer ${validToken}`)
       .send({
         content: "this is my first comment",
       });
@@ -72,9 +89,12 @@ describe("Comment API Endpoints", () => {
 
   // Test2
   it("should return error when creating a comment when post does not exist", async () => {
-    const response = await request(app).post(`/posts/999/comments`).send({
-      name: "weak",
-    });
+    const response = await request(app)
+      .post(`/posts/999/comments`)
+      .set("Authorization", `Bearer ${validToken}`)
+      .send({
+        name: "weak",
+      });
 
     expect(response.status).toBe(404);
     expect(response.body).toHaveProperty("error", "Post does not exists");
@@ -90,13 +110,16 @@ describe("Comment API Endpoints", () => {
 
     expect(posts.status).toBe(200);
 
-    await request(app).post(`/posts/${posts.body[0].id}/comments`).send({
-      content: "weak",
-    });
+    await request(app)
+      .post(`/posts/${posts.body[0].id}/comments`)
+      .set("Authorization", `Bearer ${validToken}`)
+      .send({
+        content: "weak",
+      });
 
-    const response = await request(app).get(
-      `/posts/${posts.body[0].id}/comments`
-    );
+    const response = await request(app)
+      .get(`/posts/${posts.body[0].id}/comments`)
+      .set("Authorization", `Bearer ${validToken}`);
 
     expect(response.status).toBe(200);
     expect(Array.isArray(response.body)).toBe(true);
@@ -110,7 +133,9 @@ describe("Comment API Endpoints", () => {
 
   // Test5
   it("should return error when getting all comments for post does not exist", async () => {
-    const response = await request(app).get("/posts/999/comments");
+    const response = await request(app)
+      .get("/posts/999/comments")
+      .set("Authorization", `Bearer ${validToken}`);
 
     expect(response.status).toBe(404);
     expect(response.body).toHaveProperty("error", "Post does not exists");

@@ -11,6 +11,8 @@ import express from "express";
 import { postRoutes } from "../routes/postRoutes";
 import { userRoutes } from "../routes/userRoutes";
 
+import jwt from "jsonwebtoken";
+
 // Initialize an Express application
 const app = express();
 
@@ -34,22 +36,36 @@ afterAll(async () => {
   await sequelize.close();
 });
 
+// Helper function to generate a valid token
+function generateToken(payload: string | object | Buffer, expiresIn = "1h") {
+  return jwt.sign(payload, "my-secret-key", { expiresIn });
+}
+
 describe("Post API Endpoints", () => {
+  // Generate a valid token
+  const validToken = generateToken({
+    email: "amr@gmail.com",
+    password: "Amr12341234",
+  });
+
   // Test1
   it("should create a new post", async () => {
     const userResponse = await request(app).post("/users").send({
       userName: "Amr",
       email: "amr@gmail.com",
-      password: "asdsad123455666",
+      password: "Amr12341234",
     });
 
     expect(userResponse.status).toBe(201);
 
-    const response = await request(app).post("/posts").send({
-      userId: userResponse.body.user.id,
-      title: "sucess",
-      content: "hello",
-    });
+    const response = await request(app)
+      .post("/posts")
+      .set("Authorization", `Bearer ${validToken}`)
+      .send({
+        userId: userResponse.body.user.id,
+        title: "sucess",
+        content: "hello",
+      });
 
     expect(response.status).toBe(201);
     expect(response.body).toHaveProperty(
@@ -68,11 +84,14 @@ describe("Post API Endpoints", () => {
 
   // Test2
   it("should return error when creating a post when user does not exist", async () => {
-    const response = await request(app).post("/posts").send({
-      userId: 999,
-      title: "sucess",
-      content: "hello",
-    });
+    const response = await request(app)
+      .post("/posts")
+      .set("Authorization", `Bearer ${validToken}`)
+      .send({
+        userId: 999,
+        title: "sucess",
+        content: "hello",
+      });
 
     expect(response.status).toBe(404);
     expect(response.body).toHaveProperty("error", "User not found");
@@ -105,7 +124,9 @@ describe("Post API Endpoints", () => {
 
     expect(posts.status).toBe(200);
 
-    const response = await request(app).get(`/posts/${posts.body[0].id}`);
+    const response = await request(app)
+      .get(`/posts/${posts.body[0].id}`)
+      .set("Authorization", `Bearer ${validToken}`);
 
     expect(response.status).toBe(200);
     expect(response.body).toHaveProperty("title", "sucess");
@@ -124,7 +145,9 @@ describe("Post API Endpoints", () => {
 
     expect(posts.status).toBe(200);
 
-    const response = await request(app).delete(`/posts/${posts.body[0].id}`);
+    const response = await request(app)
+      .delete(`/posts/${posts.body[0].id}`)
+      .set("Authorization", `Bearer ${validToken}`);
 
     expect(response.status).toBe(200);
     expect(response.body).toHaveProperty(
@@ -135,7 +158,9 @@ describe("Post API Endpoints", () => {
 
   // Test6
   it("should return error when deleteing a post that does not exist", async () => {
-    const response = await request(app).delete("/posts/999");
+    const response = await request(app)
+      .delete("/posts/999")
+      .set("Authorization", `Bearer ${validToken}`);
 
     expect(response.status).toBe(404);
     expect(response.body).toHaveProperty("error", "Post not found");
@@ -147,7 +172,9 @@ describe("Post API Endpoints", () => {
 
   // Test7
   it("should return error when getting a post that does not exist", async () => {
-    const response = await request(app).get("/posts/999");
+    const response = await request(app)
+      .get("/posts/999")
+      .set("Authorization", `Bearer ${validToken}`);
 
     expect(response.status).toBe(404);
     expect(response.body).toHaveProperty("error", "Post not found");
@@ -159,10 +186,13 @@ describe("Post API Endpoints", () => {
 
   // Test8
   it("should return error when updating a post that does not exist", async () => {
-    const response = await request(app).put(`/posts/999`).send({
-      title: "fail",
-      content: "nooooooooo",
-    });
+    const response = await request(app)
+      .put(`/posts/999`)
+      .set("Authorization", `Bearer ${validToken}`)
+      .send({
+        title: "fail",
+        content: "nooooooooo",
+      });
 
     expect(response.status).toBe(404);
     expect(response.body).toHaveProperty("error", "Post not found");
@@ -178,16 +208,20 @@ describe("Post API Endpoints", () => {
 
     expect(userInfo.status).toBe(200);
 
-    const postInfo = await request(app).post("/posts").send({
-      userId: userInfo.body[0].id,
-      title: "sucess",
-      content: "hello",
-    });
+    const postInfo = await request(app)
+      .post("/posts")
+      .set("Authorization", `Bearer ${validToken}`)
+      .send({
+        userId: userInfo.body[0].id,
+        title: "sucess",
+        content: "hello",
+      });
 
     expect(postInfo.status).toBe(201);
 
     const response = await request(app)
       .put(`/posts/${postInfo.body.post.id}`)
+      .set("Authorization", `Bearer ${validToken}`)
       .send({
         title: "fail",
         content: "nooooooooo",

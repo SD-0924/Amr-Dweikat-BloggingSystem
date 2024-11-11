@@ -11,6 +11,8 @@ import express from "express";
 import { postRoutes } from "../routes/postRoutes";
 import { userRoutes } from "../routes/userRoutes";
 
+import jwt from "jsonwebtoken";
+
 // Initialize an Express application
 const app = express();
 
@@ -34,27 +36,42 @@ afterAll(async () => {
   await sequelize.close();
 });
 
+// Helper function to generate a valid token
+function generateToken(payload: string | object | Buffer, expiresIn = "1h") {
+  return jwt.sign(payload, "my-secret-key", { expiresIn });
+}
+
 describe("Category API Endpoints", () => {
+  // Generate a valid token
+  const validToken = generateToken({
+    email: "amr@gmail.com",
+    password: "Amr12341234",
+  });
+
   // Test1
   it("should create a new category", async () => {
     const userInfo = await request(app).post("/users").send({
       userName: "Amr",
       email: "amr@gmail.com",
-      password: "asdsad123455666",
+      password: "Amr12341234",
     });
 
     expect(userInfo.status).toBe(201);
 
-    const postInfo = await request(app).post("/posts").send({
-      userId: userInfo.body.user.id,
-      title: "sucess",
-      content: "hello",
-    });
+    const postInfo = await request(app)
+      .post("/posts")
+      .set("Authorization", `Bearer ${validToken}`)
+      .send({
+        userId: userInfo.body.user.id,
+        title: "sucess",
+        content: "hello",
+      });
 
     expect(postInfo.status).toBe(201);
 
     const response = await request(app)
       .post(`/posts/${postInfo.body.post.id}/categories`)
+      .set("Authorization", `Bearer ${validToken}`)
       .send({
         name: "strong",
       });
@@ -69,9 +86,12 @@ describe("Category API Endpoints", () => {
 
   // Test2
   it("should return error when creating a category when post does not exist", async () => {
-    const response = await request(app).post(`/posts/999/categories`).send({
-      name: "weak",
-    });
+    const response = await request(app)
+      .post(`/posts/999/categories`)
+      .set("Authorization", `Bearer ${validToken}`)
+      .send({
+        name: "weak",
+      });
 
     expect(response.status).toBe(404);
     expect(response.body).toHaveProperty("error", "Post does not exists");
@@ -87,6 +107,7 @@ describe("Category API Endpoints", () => {
 
     const response = await request(app)
       .post(`/posts/${post.body[0].id}/categories`)
+      .set("Authorization", `Bearer ${validToken}`)
       .send({
         name: "strong",
       });
@@ -107,15 +128,16 @@ describe("Category API Endpoints", () => {
 
     const categoryInfo = await request(app)
       .post(`/posts/${postInfo.body[0].id}/categories`)
+      .set("Authorization", `Bearer ${validToken}`)
       .send({
         name: "weak",
       });
 
     expect(categoryInfo.status).toBe(201);
 
-    const response = await request(app).get(
-      `/posts/${postInfo.body[0].id}/categories`
-    );
+    const response = await request(app)
+      .get(`/posts/${postInfo.body[0].id}/categories`)
+      .set("Authorization", `Bearer ${validToken}`);
 
     expect(response.status).toBe(200);
     expect(Array.isArray(response.body)).toBe(true);
@@ -126,7 +148,9 @@ describe("Category API Endpoints", () => {
 
   // Test5
   it("should return error when getting all categories for post does not exist", async () => {
-    const response = await request(app).get("/posts/999/categories");
+    const response = await request(app)
+      .get("/posts/999/categories")
+      .set("Authorization", `Bearer ${validToken}`);
 
     expect(response.status).toBe(404);
     expect(response.body).toHaveProperty("error", "Post does not exists");
