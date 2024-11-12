@@ -100,6 +100,7 @@ export const createUser = async (req: Request, res: Response): Promise<any> => {
     password: req.body.password,
     email: req.body.email,
   });
+  delete newUser.dataValues["password"];
   res.status(201).json({
     message: "User created successfully",
     user: newUser,
@@ -112,6 +113,9 @@ export const getALLUsers = async (
   res: Response
 ): Promise<any> => {
   const users = await User.findAll();
+  for (const user of users) {
+    delete user.dataValues.password;
+  }
   res.status(200).json(users);
 };
 
@@ -131,6 +135,7 @@ export const getUser = async (req: Request, res: Response): Promise<any> => {
   // return user information if it is exist
   const user = await User.findByPk(userID);
   if (user) {
+    delete user.dataValues["password"];
     return res.status(200).json(user);
   }
 
@@ -199,6 +204,7 @@ export const updateUser = async (req: Request, res: Response): Promise<any> => {
 
   // fetch new user
   const newUser = await User.findByPk(userID);
+  delete newUser?.dataValues.password;
   res.status(200).json({
     message: "User updated successfully",
     user: newUser,
