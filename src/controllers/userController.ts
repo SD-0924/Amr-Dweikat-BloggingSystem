@@ -1,11 +1,14 @@
 // Import Request and Response from express module
 import { Request, Response } from "express";
 
-// Import User model
-import { User } from "../models/userModel";
-
 // Import joi schema validator
 import joi from "joi";
+
+// Import user jwt service
+import { userJWTService } from "../services/userJWTService";
+
+// Import user service
+import { userService } from "../services/userService";
 
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
@@ -40,11 +43,7 @@ export const loginUser = async (req: Request, res: Response): Promise<any> => {
   }
 
   // Check credentials if valid or not
-  const userInfo = await User.findOne({
-    where: {
-      email: req.body.email,
-    },
-  });
+  const userInfo = await userService.getUserByEmail(req.body.email);
   if (
     !userInfo ||
     !(await bcrypt.compare(req.body.password, userInfo.dataValues.password))
@@ -55,8 +54,30 @@ export const loginUser = async (req: Request, res: Response): Promise<any> => {
     });
   }
 
-  // return token to user
-  const token = jwt.sign(
+  // Check if there is a token realted to this user
+  let token: any = await userJWTService.getTokenByUserId(
+    userInfo.dataValues.id
+  );
+  if (token) {
+    // Check if token expired or not
+    try {
+      jwt.verify(token, JWT_SECRET);
+    } catch (err) {
+      token = jwt.sign(
+        {
+          id: userInfo.dataValues.id,
+          email: userInfo.dataValues.email,
+        },
+        JWT_SECRET,
+        { expiresIn: "15m" }
+      );
+      await userJWTService.updateTokenByUserId(userInfo.dataValues.id, token);
+    }
+    return res.status(200).json({ message: "Login successful", token });
+  }
+
+  // create a new token a returned to user
+  token = jwt.sign(
     {
       id: userInfo.dataValues.id,
       email: userInfo.dataValues.email,
@@ -64,7 +85,7 @@ export const loginUser = async (req: Request, res: Response): Promise<any> => {
     JWT_SECRET,
     { expiresIn: "15m" }
   );
-
+  await userJWTService.addUserWithToken(userInfo.dataValues.id, token);
   res.status(200).json({ message: "Login successful", token });
 };
 
@@ -80,13 +101,7 @@ export const createUser = async (req: Request, res: Response): Promise<any> => {
   }
 
   // check if other user using same email or not
-  if (
-    await User.findOne({
-      where: {
-        email: req.body.email,
-      },
-    })
-  ) {
+  if (await userService.getUserByEmail(req.body.email)) {
     return res.status(400).json({
       error: "Invalid body request",
       message:
@@ -95,12 +110,7 @@ export const createUser = async (req: Request, res: Response): Promise<any> => {
   }
 
   // create a new user
-  const newUser = await User.create({
-    userName: req.body.userName,
-    password: req.body.password,
-    email: req.body.email,
-  });
-  delete newUser.dataValues["password"];
+  const newUser = await userService.createUser(req.body);
   res.status(201).json({
     message: "User created successfully",
     user: newUser,
@@ -112,10 +122,7 @@ export const getALLUsers = async (
   req: Request,
   res: Response
 ): Promise<any> => {
-  const users = await User.findAll();
-  for (const user of users) {
-    delete user.dataValues.password;
-  }
+  const users = await userService.getUsers();
   res.status(200).json(users);
 };
 
@@ -133,7 +140,7 @@ export const getUser = async (req: Request, res: Response): Promise<any> => {
   const userID = Number(req.params.userId);
 
   // return user information if it is exist
-  const user = await User.findByPk(userID);
+  const user = await userService.getUserById(userID);
   if (user) {
     delete user.dataValues["password"];
     return res.status(200).json(user);
@@ -160,7 +167,7 @@ export const updateUser = async (req: Request, res: Response): Promise<any> => {
   const userID = Number(req.params.userId);
 
   // check user if it is exist or not
-  if (!(await User.findByPk(userID))) {
+  if (!(await userService.getUserById(userID))) {
     return res.status(404).json({
       error: "User not found",
       message:
@@ -178,12 +185,7 @@ export const updateUser = async (req: Request, res: Response): Promise<any> => {
   }
 
   // check if other user using same email or not
-  const users = await User.findOne({
-    where: {
-      email: req.body.email,
-    },
-  });
-  if (users && users.dataValues.id !== userID) {
+  if (await userService.getUserByEmail(req.body.email)) {
     return res.status(400).json({
       error: "Invalid body request",
       message: "there is a user already has the new email",
@@ -191,19 +193,14 @@ export const updateUser = async (req: Request, res: Response): Promise<any> => {
   }
 
   // update user information
-  await User.update(
-    {
-      userName: req.body.userName,
-      password: req.body.password,
-      email: req.body.email,
-    },
-    {
-      where: { id: userID },
-    }
-  );
+  await userService.updateUser(userID, req.body);
+
+  // delete current token from databse
+  const token = req.header("Authorization")?.split(" ")[1];
+  await userJWTService.removeToken(token);
 
   // fetch new user
-  const newUser = await User.findByPk(userID);
+  const newUser = await userService.getUserById(userID);
   delete newUser?.dataValues.password;
   res.status(200).json({
     message: "User updated successfully",
@@ -225,11 +222,7 @@ export const deleteUser = async (req: Request, res: Response): Promise<any> => {
   const userID = Number(req.params.userId);
 
   // delete user based on id that user provided
-  const result = await User.destroy({
-    where: {
-      id: userID,
-    },
-  });
+  const result = await userService.deleteUserById(userID);
 
   // error message because user does not exist
   if (result === 0) {

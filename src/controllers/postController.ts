@@ -1,12 +1,9 @@
 // Import Request and Response from express module
 import { Request, Response } from "express";
 
-// Import User model
-import { User } from "../models/userModel";
-import { Post } from "../models/postModel";
-import { Category } from "../models/categoryModel";
-import { Comment } from "../models/commentModel";
-import { PostCategory } from "../models/postCategoryModel";
+// Import services
+import { postService } from "../services/postService";
+import { userService } from "../services/userService";
 
 // Import joi schema validator
 import joi from "joi";
@@ -39,7 +36,7 @@ export const createPost = async (req: Request, res: Response): Promise<any> => {
   }
 
   // check if user exist or not
-  const user = await User.findByPk(req.body.userId);
+  const user = await userService.getUserById(req.body.userId);
   if (!user) {
     return res.status(404).json({
       error: "User not found",
@@ -49,13 +46,7 @@ export const createPost = async (req: Request, res: Response): Promise<any> => {
   }
 
   // create a new post
-
-  const { dataValues: newPost } = await Post.create({
-    userId: req.body.userId,
-    title: req.body.title,
-    content: req.body.content,
-  });
-  delete newPost["userId"];
+  const newPost = await postService.createPost(req.body);
   newPost["user"] = user;
   delete newPost["user"].dataValues["password"];
   res.status(201).json({
@@ -69,36 +60,8 @@ export const getALLPosts = async (
   req: Request,
   res: Response
 ): Promise<any> => {
-  const posts = await Post.findAll();
-  const result = [];
-
-  for (let post of posts) {
-    post.dataValues["user"] = await User.findByPk(post.dataValues.userId);
-    delete post.dataValues["user"].dataValues["password"];
-    const categories = await PostCategory.findAll({
-      where: {
-        postId: post.dataValues.id,
-      },
-    });
-    const allCategories = [];
-    for (const item of categories) {
-      allCategories.push(await Category.findByPk(item.dataValues.categoryId));
-    }
-    post.dataValues["categories"] = allCategories;
-    post.dataValues["comments"] = await Comment.findAll({
-      where: {
-        postId: post.dataValues.id,
-      },
-    });
-
-    for (const comment of post.dataValues["comments"]) {
-      delete comment.dataValues["userId"];
-      delete comment.dataValues["postId"];
-    }
-    delete post.dataValues["userId"];
-    result.push(post);
-  }
-  res.status(200).json(result);
+  const posts = await postService.getPosts();
+  res.status(200).json(posts);
 };
 
 // Gett a specific post
@@ -115,7 +78,7 @@ export const getPost = async (req: Request, res: Response): Promise<any> => {
   const postID = Number(req.params.postId);
 
   // return error message because post does not exist
-  if (!(await Post.findByPk(postID))) {
+  if (!(await postService.getPostById(postID))) {
     return res.status(404).json({
       error: "Post not found",
       message: "the post you are trying to fetch doest not exists",
@@ -123,33 +86,7 @@ export const getPost = async (req: Request, res: Response): Promise<any> => {
   }
 
   // return post information if it is exist
-  const post = await Post.findByPk(postID);
-  if (post) {
-    post.dataValues["user"] = await User.findByPk(post.dataValues.userId);
-    delete post.dataValues["user"].dataValues["password"];
-    const categories = await PostCategory.findAll({
-      where: {
-        postId: post.dataValues.id,
-      },
-    });
-    const allCategories = [];
-    for (const item of categories) {
-      allCategories.push(await Category.findByPk(item.dataValues.categoryId));
-    }
-    post.dataValues["categories"] = allCategories;
-    post.dataValues["comments"] = await Comment.findAll({
-      where: {
-        postId: post.dataValues.id,
-      },
-    });
-
-    for (const comment of post.dataValues["comments"]) {
-      delete comment.dataValues["userId"];
-      delete comment.dataValues["postId"];
-    }
-    delete post.dataValues["userId"];
-  }
-
+  const post = await postService.getFullPostInformation(postID);
   return res.status(200).json(post);
 };
 
@@ -167,7 +104,7 @@ export const updatePost = async (req: Request, res: Response): Promise<any> => {
   const postID = Number(req.params.postId);
 
   // check post if it is exist or not
-  if (!(await Post.findByPk(postID))) {
+  if (!(await postService.getPostById(postID))) {
     return res.status(404).json({
       error: "Post not found",
       message:
@@ -185,43 +122,10 @@ export const updatePost = async (req: Request, res: Response): Promise<any> => {
   }
 
   // update post
-  await Post.update(
-    {
-      title: req.body.title,
-      content: req.body.content,
-    },
-    {
-      where: { id: postID },
-    }
-  );
+  await postService.updatePost(postID, req.body);
 
   // fetch new post
-  const newPost = await Post.findByPk(postID);
-  if (newPost) {
-    newPost.dataValues["user"] = await User.findByPk(newPost.dataValues.userId);
-    delete newPost.dataValues["user"].dataValues["password"];
-    const categories = await PostCategory.findAll({
-      where: {
-        postId: newPost.dataValues.id,
-      },
-    });
-    const allCategories = [];
-    for (const item of categories) {
-      allCategories.push(await Category.findByPk(item.dataValues.categoryId));
-    }
-    newPost.dataValues["categories"] = allCategories;
-    newPost.dataValues["comments"] = await Comment.findAll({
-      where: {
-        postId: newPost.dataValues.id,
-      },
-    });
-
-    for (const comment of newPost.dataValues["comments"]) {
-      delete comment.dataValues["userId"];
-      delete comment.dataValues["postId"];
-    }
-    delete newPost.dataValues["userId"];
-  }
+  const newPost = await postService.getFullPostInformation(postID);
   res.status(200).json({
     message: "Post updated successfully",
     post: newPost,
@@ -242,11 +146,7 @@ export const deletePost = async (req: Request, res: Response): Promise<any> => {
   const postID = Number(req.params.postId);
 
   // delete user based on id that user provided
-  const result = await Post.destroy({
-    where: {
-      id: postID,
-    },
-  });
+  const result = await postService.deletePostById(postID);
 
   // error message because post does not exist
   if (result === 0) {

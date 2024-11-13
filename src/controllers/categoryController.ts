@@ -1,13 +1,13 @@
 // Import Request and Response from express module
 import { Request, Response } from "express";
 
-// Import User model
-import { Post } from "../models/postModel";
-import { Category } from "../models/categoryModel";
-import { PostCategory } from "../models/postCategoryModel";
-
 // Import joi schema validator
 import joi from "joi";
+
+// Import services
+import { postService } from "../services/postService";
+import { categoryService } from "../services/categoryService";
+import { postCategoryService } from "../services/postCategoryService";
 
 // Joi validation schema for create category
 const categorySchema = joi.object({
@@ -34,7 +34,7 @@ export const createCategory = async (
   const postID = Number(req.params.postId);
 
   // check post if exist or not
-  if (!(await Post.findByPk(postID))) {
+  if (!(await postService.getPostById(postID))) {
     return res.status(404).json({
       error: "Post does not exists",
       message: "the post you're trying to work on does not exists",
@@ -51,19 +51,15 @@ export const createCategory = async (
   }
 
   // check if post already has category or not
-  let categoryInfo: any = await Category.findOne({
-    where: {
-      name: req.body.name,
-    },
-  });
+  let categoryInfo: any = await categoryService.getCategoryByName(
+    req.body.name
+  );
   if (categoryInfo) {
     if (
-      await PostCategory.findOne({
-        where: {
-          postId: postID,
-          categoryId: categoryInfo.dataValues.id,
-        },
-      })
+      await postCategoryService.getCategoryForPost(
+        postID,
+        categoryInfo.dataValues.id
+      )
     ) {
       return res.status(409).json({
         error: "Category already assigned",
@@ -74,14 +70,12 @@ export const createCategory = async (
   }
   // create a new category
   if (!categoryInfo) {
-    categoryInfo = await Category.create({
-      name: req.body.name,
-    });
+    categoryInfo = await categoryService.createCategory(req.body.name);
   }
-  await PostCategory.create({
-    postId: postID,
-    categoryId: categoryInfo.dataValues.id,
-  });
+  await postCategoryService.createCategoryForPost(
+    postID,
+    categoryInfo.dataValues.id
+  );
   res.status(201).json({
     message: "Category created successfully",
     category: categoryInfo,
@@ -105,7 +99,7 @@ export const getCategories = async (
   const postID = Number(req.params.postId);
 
   // check post if exist or not
-  if (!(await Post.findByPk(postID))) {
+  if (!(await postService.getPostById(postID))) {
     return res.status(404).json({
       error: "Post does not exists",
       message: "the post you're trying to work on does not exists",
@@ -113,14 +107,12 @@ export const getCategories = async (
   }
 
   // get all comments
-  const categories = await PostCategory.findAll({
-    where: {
-      postId: postID,
-    },
-  });
+  const categories = await postCategoryService.getCategoriesForPost(postID);
   const result = [];
   for (const category of categories) {
-    result.push(await Category.findByPk(category.dataValues.categoryId));
+    result.push(
+      await categoryService.getCategoryById(category.dataValues.categoryId)
+    );
   }
   res.status(200).json(result);
 };

@@ -7,6 +7,20 @@ import { Post } from "./postModel";
 export const Comment = sequelize.define(
   "Comment",
   {
+    userId: {
+      type: DataTypes.INTEGER,
+      references: {
+        model: User,
+        key: "id",
+      },
+    },
+    postId: {
+      type: DataTypes.INTEGER,
+      references: {
+        model: Post,
+        key: "id",
+      },
+    },
     id: {
       type: DataTypes.INTEGER,
       primaryKey: true,
@@ -30,19 +44,3 @@ export const Comment = sequelize.define(
     timestamps: true,
   }
 );
-// Set up the 1-to-many relationship between user and comment
-User.hasMany(Comment, {
-  foreignKey: "userId",
-  onDelete: "CASCADE",
-});
-Comment.belongsTo(User, {
-  foreignKey: "userId",
-});
-// Set up the 1-to-many relationship between post and comment
-Post.hasMany(Comment, {
-  foreignKey: "postId",
-  onDelete: "CASCADE",
-});
-Comment.belongsTo(Post, {
-  foreignKey: "postId",
-});

@@ -21,21 +21,14 @@ export const PostCategory = sequelize.define(
         key: "id",
       },
     },
+    id: {
+      type: DataTypes.INTEGER,
+      autoIncrement: true,
+      primaryKey: true,
+    },
   },
   {
     tableName: "post_category",
     timestamps: false,
   }
 );
-
-// Set up the Many-to-Many relationship between post and category
-Post.belongsToMany(Category, {
-  through: PostCategory,
-  foreignKey: "postId",
-  otherKey: "categoryId",
-});
-Category.belongsToMany(Post, {
-  through: PostCategory,
-  foreignKey: "categoryId",
-  otherKey: "postId",
-});

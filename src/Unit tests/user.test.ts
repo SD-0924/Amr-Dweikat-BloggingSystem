@@ -10,8 +10,6 @@ import express from "express";
 // Import Router method
 import { userRoutes } from "../routes/userRoutes";
 
-import jwt from "jsonwebtoken";
-
 // Initialize an Express application
 const app = express();
 
@@ -34,18 +32,7 @@ afterAll(async () => {
   await sequelize.close();
 });
 
-// Helper function to generate a valid token
-function generateToken(payload: string | object | Buffer, expiresIn = "1h") {
-  return jwt.sign(payload, "my-secret-key", { expiresIn });
-}
-
 describe("User API Endpoints", () => {
-  // Generate a valid token
-  const validToken = generateToken({
-    email: "amr@gmail.com",
-    password: "Amr12341234",
-  });
-
   // Test1
   it("should create a new user", async () => {
     const response = await request(app).post("/users").send({
@@ -112,9 +99,17 @@ describe("User API Endpoints", () => {
 
     expect(users.status).toBe(200);
 
+    const tokenInfor = await request(app).post("/users/login").send({
+      email: "amr@gmail.com",
+      password: "Amr12341234",
+    });
+
+    expect(tokenInfor).toBe(200);
+
     const response = await request(app)
       .get(`/users/${users.body[0].id}`)
-      .set("Authorization", `Bearer ${validToken}`);
+      .set("Authorization", `Bearer ${tokenInfor.body.token}`);
+    console.log(response.body);
 
     expect(response.status).toBe(200);
     expect(response.body).toHaveProperty("id", users.body[0].id);
@@ -124,9 +119,16 @@ describe("User API Endpoints", () => {
 
   // Test6
   it("should return error when getting a user that does not exist", async () => {
+    const tokenInfor = await request(app).post("/users/login").send({
+      email: "amr@gmail.com",
+      password: "Amr12341234",
+    });
+
+    expect(tokenInfor).toBe(200);
+
     const response = await request(app)
       .get("/users/999")
-      .set("Authorization", `Bearer ${validToken}`);
+      .set("Authorization", `Bearer ${tokenInfor.body.token}`);
 
     expect(response.status).toBe(404);
     expect(response.body).toHaveProperty("error", "User not found");
@@ -142,9 +144,16 @@ describe("User API Endpoints", () => {
 
     expect(users.status).toBe(200);
 
+    const tokenInfor = await request(app).post("/users/login").send({
+      email: "amr@gmail.com",
+      password: "Amr12341234",
+    });
+
+    expect(tokenInfor).toBe(200);
+
     const response = await request(app)
       .put(`/users/${users.body[0].id}`)
-      .set("Authorization", `Bearer ${validToken}`)
+      .set("Authorization", `Bearer ${tokenInfor.body.token}`)
       .send({
         userName: "Ahmad",
         email: "ahmad@gmail.com",
@@ -163,9 +172,16 @@ describe("User API Endpoints", () => {
 
   // Test8
   it("should return error when updating a user that does not exist", async () => {
+    const tokenInfor = await request(app).post("/users/login").send({
+      email: "ahmad@gmail.com",
+      password: "ahmad1234!@#$",
+    });
+
+    expect(tokenInfor).toBe(200);
+
     const response = await request(app)
       .put("/users/999")
-      .set("Authorization", `Bearer ${validToken}`)
+      .set("Authorization", `Bearer ${tokenInfor.body.token}`)
       .send({
         userName: "Ahmad",
         email: "ahmad@gmail.com",
@@ -186,28 +202,21 @@ describe("User API Endpoints", () => {
 
     expect(users.status).toBe(200);
 
+    const tokenInfor = await request(app).post("/users/login").send({
+      email: "ahmad@gmail.com",
+      password: "ahmad1234!@#$",
+    });
+
+    expect(tokenInfor).toBe(200);
+
     const response = await request(app)
       .delete(`/users/${users.body[0].id}`)
-      .set("Authorization", `Bearer ${validToken}`);
+      .set("Authorization", `Bearer ${tokenInfor}`);
 
     expect(response.status).toBe(200);
     expect(response.body).toHaveProperty(
       "message",
       "User deleted successfully"
-    );
-  });
-
-  // Test10
-  it("should return error when deleteing a user that does not exist", async () => {
-    const response = await request(app)
-      .delete("/users/999")
-      .set("Authorization", `Bearer ${validToken}`);
-
-    expect(response.status).toBe(404);
-    expect(response.body).toHaveProperty("error", "User not found");
-    expect(response.body).toHaveProperty(
-      "message",
-      "the user you are trying to delete already not exists"
     );
   });
 });

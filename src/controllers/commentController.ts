@@ -1,9 +1,11 @@
 // Import Request and Response from express module
 import { Request, Response } from "express";
 
-// Import User model
-import { Post } from "../models/postModel";
-import { Comment } from "../models/commentModel";
+// Import comment service
+import { commentService } from "../services/commentService";
+
+// Import post service
+import { postService } from "../services/postService";
 
 // Import joi schema validator
 import joi from "joi";
@@ -33,7 +35,7 @@ export const createComment = async (
   const postID = Number(req.params.postId);
 
   // check post if exist or not
-  const postInfo = await Post.findByPk(postID);
+  const postInfo = await postService.getPostById(postID);
   if (!postInfo) {
     return res.status(404).json({
       error: "Post does not exists",
@@ -51,11 +53,11 @@ export const createComment = async (
   }
 
   // create a new comment
-  const newComment = await Comment.create({
-    userId: postInfo.dataValues.userId,
-    postId: postID,
-    content: req.body.content,
-  });
+  const newComment = await commentService.createComment(
+    postInfo.dataValues.userId,
+    postID,
+    req.body.content
+  );
   res.status(201).json({
     message: "Comment created successfully",
     comment: newComment,
@@ -79,7 +81,7 @@ export const getComments = async (
   const postID = Number(req.params.postId);
 
   // check post if exist or not
-  if (!(await Post.findByPk(postID))) {
+  if (!(await postService.getPostById(postID))) {
     return res.status(404).json({
       error: "Post does not exists",
       message: "the post you're trying to work on does not exists",
@@ -87,10 +89,6 @@ export const getComments = async (
   }
 
   // get all comments
-  const comments = await Comment.findAll({
-    where: {
-      postId: postID,
-    },
-  });
+  const comments = await commentService.getComments(postID);
   res.status(200).json(comments);
 };

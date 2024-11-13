@@ -6,6 +6,13 @@ import { User } from "./userModel";
 export const Post = sequelize.define(
   "Post",
   {
+    userId: {
+      type: DataTypes.INTEGER,
+      references: {
+        model: User,
+        key: "id",
+      },
+    },
     id: {
       type: DataTypes.INTEGER,
       primaryKey: true,
@@ -33,12 +40,3 @@ export const Post = sequelize.define(
     timestamps: true,
   }
 );
-
-// Set up the 1-to-many relationship between user and post
-User.hasMany(Post, {
-  foreignKey: "userId",
-  onDelete: "CASCADE",
-});
-Post.belongsTo(User, {
-  foreignKey: "userId",
-});
