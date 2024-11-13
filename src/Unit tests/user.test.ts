@@ -16,15 +16,12 @@ const app = express();
 // Handle existing routes after base URL
 app.use("/users", userRoutes);
 
+import { defineAssociations } from "../models/associations";
+
 // Reset DB before test suite
 beforeAll(async () => {
-  try {
-    await sequelize.query("SET FOREIGN_KEY_CHECKS = 0;");
-    await sequelize.sync({ force: true });
-    await sequelize.query("SET FOREIGN_KEY_CHECKS = 1;");
-  } catch (error) {
-    console.error("Error during cleanup:", error);
-  }
+  defineAssociations();
+  await sequelize.sync({ force: true });
 });
 
 // Close the connection after test suite
@@ -104,12 +101,11 @@ describe("User API Endpoints", () => {
       password: "Amr12341234",
     });
 
-    expect(tokenInfor).toBe(200);
+    expect(tokenInfor.status).toBe(200);
 
     const response = await request(app)
       .get(`/users/${users.body[0].id}`)
       .set("Authorization", `Bearer ${tokenInfor.body.token}`);
-    console.log(response.body);
 
     expect(response.status).toBe(200);
     expect(response.body).toHaveProperty("id", users.body[0].id);
@@ -124,7 +120,7 @@ describe("User API Endpoints", () => {
       password: "Amr12341234",
     });
 
-    expect(tokenInfor).toBe(200);
+    expect(tokenInfor.status).toBe(200);
 
     const response = await request(app)
       .get("/users/999")
@@ -149,7 +145,7 @@ describe("User API Endpoints", () => {
       password: "Amr12341234",
     });
 
-    expect(tokenInfor).toBe(200);
+    expect(tokenInfor.status).toBe(200);
 
     const response = await request(app)
       .put(`/users/${users.body[0].id}`)
@@ -177,7 +173,7 @@ describe("User API Endpoints", () => {
       password: "ahmad1234!@#$",
     });
 
-    expect(tokenInfor).toBe(200);
+    expect(tokenInfor.status).toBe(200);
 
     const response = await request(app)
       .put("/users/999")
@@ -207,12 +203,13 @@ describe("User API Endpoints", () => {
       password: "ahmad1234!@#$",
     });
 
-    expect(tokenInfor).toBe(200);
+    expect(tokenInfor.status).toBe(200);
 
     const response = await request(app)
       .delete(`/users/${users.body[0].id}`)
-      .set("Authorization", `Bearer ${tokenInfor}`);
+      .set("Authorization", `Bearer ${tokenInfor.body.token}`);
 
+    console.log("user deleted");
     expect(response.status).toBe(200);
     expect(response.body).toHaveProperty(
       "message",

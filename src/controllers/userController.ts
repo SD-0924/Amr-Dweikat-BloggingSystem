@@ -63,6 +63,7 @@ export const loginUser = async (req: Request, res: Response): Promise<any> => {
     try {
       jwt.verify(token, JWT_SECRET);
     } catch (err) {
+      await userJWTService.removeToken(token);
       token = jwt.sign(
         {
           id: userInfo.dataValues.id,
@@ -71,7 +72,7 @@ export const loginUser = async (req: Request, res: Response): Promise<any> => {
         JWT_SECRET,
         { expiresIn: "15m" }
       );
-      await userJWTService.updateTokenByUserId(userInfo.dataValues.id, token);
+      await userJWTService.addUserWithToken(userInfo.dataValues.id, token);
     }
     return res.status(200).json({ message: "Login successful", token });
   }
@@ -221,7 +222,7 @@ export const deleteUser = async (req: Request, res: Response): Promise<any> => {
   // get user id from URL
   const userID = Number(req.params.userId);
 
-  // delete user based on id that user provided
+  // delete current token from database
   const result = await userService.deleteUserById(userID);
 
   // error message because user does not exist

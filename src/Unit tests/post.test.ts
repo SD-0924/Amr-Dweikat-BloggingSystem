@@ -11,10 +11,6 @@ import express from "express";
 import { postRoutes } from "../routes/postRoutes";
 import { userRoutes } from "../routes/userRoutes";
 
-import { defineAssociations } from "../models/associations";
-
-import jwt from "jsonwebtoken";
-
 // Initialize an Express application
 const app = express();
 
@@ -22,32 +18,20 @@ const app = express();
 app.use("/posts", postRoutes);
 app.use("/users", userRoutes);
 
+import { defineAssociations } from "../models/associations";
+
 // Reset DB before test suite
 beforeAll(async () => {
-  try {
-    defineAssociations();
-    await sequelize.sync({ force: true });
-  } catch (error) {
-    console.error("Error during cleanup:", error);
-  }
+  defineAssociations();
+  await sequelize.sync({ force: true });
 });
+
 // Close the connection after test suite
 afterAll(async () => {
   await sequelize.close();
 });
 
-// Helper function to generate a valid token
-function generateToken(payload: string | object | Buffer, expiresIn = "1h") {
-  return jwt.sign(payload, "my-secret-key", { expiresIn });
-}
-
 describe("Post API Endpoints", () => {
-  // Generate a valid token
-  const validToken = generateToken({
-    email: "amr@gmail.com",
-    password: "Amr12341234",
-  });
-
   // Test1
   it("should create a new post", async () => {
     const userResponse = await request(app).post("/users").send({
@@ -58,9 +42,16 @@ describe("Post API Endpoints", () => {
 
     expect(userResponse.status).toBe(201);
 
+    const tokenInfor = await request(app).post("/users/login").send({
+      email: "amr@gmail.com",
+      password: "Amr12341234",
+    });
+
+    expect(tokenInfor.status).toBe(200);
+
     const response = await request(app)
       .post("/posts")
-      .set("Authorization", `Bearer ${validToken}`)
+      .set("Authorization", `Bearer ${tokenInfor.body.token}`)
       .send({
         userId: userResponse.body.user.id,
         title: "sucess",
@@ -84,9 +75,16 @@ describe("Post API Endpoints", () => {
 
   // Test2
   it("should return error when creating a post when user does not exist", async () => {
+    const tokenInfor = await request(app).post("/users/login").send({
+      email: "amr@gmail.com",
+      password: "Amr12341234",
+    });
+
+    expect(tokenInfor.status).toBe(200);
+
     const response = await request(app)
       .post("/posts")
-      .set("Authorization", `Bearer ${validToken}`)
+      .set("Authorization", `Bearer ${tokenInfor.body.token}`)
       .send({
         userId: 999,
         title: "sucess",
@@ -124,9 +122,16 @@ describe("Post API Endpoints", () => {
 
     expect(posts.status).toBe(200);
 
+    const tokenInfor = await request(app).post("/users/login").send({
+      email: "amr@gmail.com",
+      password: "Amr12341234",
+    });
+
+    expect(tokenInfor.status).toBe(200);
+
     const response = await request(app)
       .get(`/posts/${posts.body[0].id}`)
-      .set("Authorization", `Bearer ${validToken}`);
+      .set("Authorization", `Bearer ${tokenInfor.body.token}`);
 
     expect(response.status).toBe(200);
     expect(response.body).toHaveProperty("title", "sucess");
@@ -145,9 +150,16 @@ describe("Post API Endpoints", () => {
 
     expect(posts.status).toBe(200);
 
+    const tokenInfor = await request(app).post("/users/login").send({
+      email: "amr@gmail.com",
+      password: "Amr12341234",
+    });
+
+    expect(tokenInfor.status).toBe(200);
+
     const response = await request(app)
       .delete(`/posts/${posts.body[0].id}`)
-      .set("Authorization", `Bearer ${validToken}`);
+      .set("Authorization", `Bearer ${tokenInfor.body.token}`);
 
     expect(response.status).toBe(200);
     expect(response.body).toHaveProperty(
@@ -158,9 +170,16 @@ describe("Post API Endpoints", () => {
 
   // Test6
   it("should return error when deleteing a post that does not exist", async () => {
+    const tokenInfor = await request(app).post("/users/login").send({
+      email: "amr@gmail.com",
+      password: "Amr12341234",
+    });
+
+    expect(tokenInfor.status).toBe(200);
+
     const response = await request(app)
       .delete("/posts/999")
-      .set("Authorization", `Bearer ${validToken}`);
+      .set("Authorization", `Bearer ${tokenInfor.body.token}`);
 
     expect(response.status).toBe(404);
     expect(response.body).toHaveProperty("error", "Post not found");
@@ -172,9 +191,16 @@ describe("Post API Endpoints", () => {
 
   // Test7
   it("should return error when getting a post that does not exist", async () => {
+    const tokenInfor = await request(app).post("/users/login").send({
+      email: "amr@gmail.com",
+      password: "Amr12341234",
+    });
+
+    expect(tokenInfor.status).toBe(200);
+
     const response = await request(app)
       .get("/posts/999")
-      .set("Authorization", `Bearer ${validToken}`);
+      .set("Authorization", `Bearer ${tokenInfor.body.token}`);
 
     expect(response.status).toBe(404);
     expect(response.body).toHaveProperty("error", "Post not found");
@@ -186,9 +212,16 @@ describe("Post API Endpoints", () => {
 
   // Test8
   it("should return error when updating a post that does not exist", async () => {
+    const tokenInfor = await request(app).post("/users/login").send({
+      email: "amr@gmail.com",
+      password: "Amr12341234",
+    });
+
+    expect(tokenInfor.status).toBe(200);
+
     const response = await request(app)
       .put(`/posts/999`)
-      .set("Authorization", `Bearer ${validToken}`)
+      .set("Authorization", `Bearer ${tokenInfor.body.token}`)
       .send({
         title: "fail",
         content: "nooooooooo",
@@ -208,9 +241,16 @@ describe("Post API Endpoints", () => {
 
     expect(userInfo.status).toBe(200);
 
+    const tokenInfor = await request(app).post("/users/login").send({
+      email: "amr@gmail.com",
+      password: "Amr12341234",
+    });
+
+    expect(tokenInfor.status).toBe(200);
+
     const postInfo = await request(app)
       .post("/posts")
-      .set("Authorization", `Bearer ${validToken}`)
+      .set("Authorization", `Bearer ${tokenInfor.body.token}`)
       .send({
         userId: userInfo.body[0].id,
         title: "sucess",
@@ -221,7 +261,7 @@ describe("Post API Endpoints", () => {
 
     const response = await request(app)
       .put(`/posts/${postInfo.body.post.id}`)
-      .set("Authorization", `Bearer ${validToken}`)
+      .set("Authorization", `Bearer ${tokenInfor.body.token}`)
       .send({
         title: "fail",
         content: "nooooooooo",

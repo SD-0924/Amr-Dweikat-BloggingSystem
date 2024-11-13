@@ -28,17 +28,6 @@ export class userJWTService {
       token,
     });
   }
-  // Update token for specific user
-  static async updateTokenByUserId(userId: number, token: string) {
-    await UserJWT.update(
-      {
-        token,
-      },
-      {
-        where: { userId },
-      }
-    );
-  }
   // Remove token
   static async removeToken(token: string | undefined) {
     await UserJWT.destroy({

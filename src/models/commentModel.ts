@@ -7,20 +7,6 @@ import { Post } from "./postModel";
 export const Comment = sequelize.define(
   "Comment",
   {
-    userId: {
-      type: DataTypes.INTEGER,
-      references: {
-        model: User,
-        key: "id",
-      },
-    },
-    postId: {
-      type: DataTypes.INTEGER,
-      references: {
-        model: Post,
-        key: "id",
-      },
-    },
     id: {
       type: DataTypes.INTEGER,
       primaryKey: true,
