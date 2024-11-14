@@ -23,5 +23,6 @@ export const authenticateJWT = async (
     return res.status(400).json({ message: "Invalid or expired token" });
   }
 
+  // Token is valid and not expired
   next();
 };

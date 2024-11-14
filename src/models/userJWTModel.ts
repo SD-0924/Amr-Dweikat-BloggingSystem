@@ -2,7 +2,7 @@ import { sequelize } from "../config/db";
 import { DataTypes } from "sequelize";
 import { User } from "./userModel";
 
-// Define the Category model
+// Define the UserJWT model
 export const UserJWT = sequelize.define(
   "UserJWT",
   {

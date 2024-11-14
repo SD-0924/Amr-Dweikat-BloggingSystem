@@ -3,7 +3,7 @@ import { DataTypes } from "sequelize";
 import { Post } from "./postModel";
 import { Category } from "./categoryModel";
 
-// Define the Category model
+// Define the PostCategory model
 export const PostCategory = sequelize.define(
   "PostCategory",
   {

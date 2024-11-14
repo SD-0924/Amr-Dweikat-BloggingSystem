@@ -1,4 +1,4 @@
-// Import User model
+// Import comment model
 import { Comment } from "../models/commentModel";
 
 export class commentService {

@@ -1,4 +1,4 @@
-// Import User model
+// Import user model
 import { User } from "../models/userModel";
 
 export class userService {

@@ -1,4 +1,4 @@
-// Import User model
+// Import user jwt model
 import { UserJWT } from "../models/userJWTModel";
 
 // Import jwt model

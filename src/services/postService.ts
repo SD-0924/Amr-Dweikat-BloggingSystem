@@ -1,4 +1,4 @@
-// Import Post model
+// Import post model
 import { Post } from "../models/postModel";
 
 // Import services

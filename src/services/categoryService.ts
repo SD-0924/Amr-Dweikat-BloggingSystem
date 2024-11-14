@@ -1,4 +1,4 @@
-// Import Category model
+// Import category model
 import { Category } from "../models/categoryModel";
 
 export class categoryService {

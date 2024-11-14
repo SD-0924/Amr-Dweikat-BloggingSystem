@@ -1,4 +1,4 @@
-// Import PostCategory model
+// Import postCategory model
 import { PostCategory } from "../models/postCategoryModel";
 
 export class postCategoryService {

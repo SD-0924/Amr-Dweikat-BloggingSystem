@@ -142,10 +142,10 @@ export const deletePost = async (req: Request, res: Response): Promise<any> => {
       .json({ message: "post id must be a positive integer" });
   }
 
-  // get user id from URL
+  // get post id from URL
   const postID = Number(req.params.postId);
 
-  // delete user based on id that user provided
+  // delete post based on id that user provided
   const result = await postService.deletePostById(postID);
 
   // error message because post does not exist

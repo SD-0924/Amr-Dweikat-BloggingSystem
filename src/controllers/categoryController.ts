@@ -106,7 +106,7 @@ export const getCategories = async (
     });
   }
 
-  // get all comments
+  // get all categories
   const categories = await postCategoryService.getCategoriesForPost(postID);
   const result = [];
   for (const category of categories) {
