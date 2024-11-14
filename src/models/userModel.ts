@@ -19,8 +19,7 @@ export const User = sequelize.define(
       type: DataTypes.STRING,
       allowNull: false,
       set(value: string) {
-        const salt = bcrypt.genSaltSync(10);
-        const hashedPassword = bcrypt.hashSync(value, salt);
+        const hashedPassword = bcrypt.hashSync(value, 10);
         this.setDataValue("password", hashedPassword);
       },
     },

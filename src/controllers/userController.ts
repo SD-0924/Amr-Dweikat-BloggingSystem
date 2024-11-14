@@ -46,7 +46,7 @@ export const loginUser = async (req: Request, res: Response): Promise<any> => {
   const userInfo = await userService.getUserByEmail(req.body.email);
   if (
     !userInfo ||
-    !(await bcrypt.compare(req.body.password, userInfo.dataValues.password))
+    !bcrypt.compareSync(req.body.password, userInfo.dataValues.password)
   ) {
     return res.status(401).json({
       error: "error",
