@@ -10,11 +10,11 @@ import { userRoutes } from "../routes/userRoutes";
 // Import models
 import { User } from "../models/userModel";
 import { userJWTService } from "../services/userJWTService";
-import { UserJWT } from "../models/userJWT";
+import { UserJWT } from "../models/userJWTModel";
 
 // Mocking the entire models
 jest.mock("../models/userModel");
-jest.mock("../models/userJWT");
+jest.mock("../models/userJWTModel");
 
 // Initialize an Express application
 const app = express();
@@ -153,10 +153,7 @@ describe("User API Endpoints", () => {
 
     const response = await request(app)
       .get(`/users/1`)
-      .set(
-        "Authorization",
-        `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJhbXJAZ21haWwuY29tIiwiaWF0IjoxNzMxNTgyODg3LCJleHAiOjE3MzE1ODM3ODd9.l9PBEk-F-N3fOZRNfNQTP3E2X5IMYU86HBSFsxqQBOY`
-      );
+      .set("Authorization", `Bearer ${mockToken.token}`);
 
     expect(response.status).toBe(200);
     expect(response.body).toHaveProperty("id", 1);
@@ -177,10 +174,7 @@ describe("User API Endpoints", () => {
     (User.findByPk as jest.Mock).mockResolvedValue(null);
     const response = await request(app)
       .get("/users/999")
-      .set(
-        "Authorization",
-        `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJhbXJAZ21haWwuY29tIiwiaWF0IjoxNzMxNTgyODg3LCJleHAiOjE3MzE1ODM3ODd9.l9PBEk-F-N3fOZRNfNQTP3E2X5IMYU86HBSFsxqQBOY`
-      );
+      .set("Authorization", `Bearer ${mockToken.token}`);
 
     expect(response.status).toBe(404);
     expect(response.body).toHaveProperty("error", "User not found");
@@ -217,10 +211,7 @@ describe("User API Endpoints", () => {
 
     const response = await request(app)
       .put(`/users/1`)
-      .set(
-        "Authorization",
-        `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJhbXJAZ21haWwuY29tIiwiaWF0IjoxNzMxNTgyODg3LCJleHAiOjE3MzE1ODM3ODd9.l9PBEk-F-N3fOZRNfNQTP3E2X5IMYU86HBSFsxqQBOY`
-      )
+      .set("Authorization", `Bearer ${mockToken.token}`)
       .send({
         userName: "Ahmad",
         email: "ahmad@gmail.com",
@@ -251,10 +242,7 @@ describe("User API Endpoints", () => {
 
     const response = await request(app)
       .put("/users/999")
-      .set(
-        "Authorization",
-        `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJhbXJAZ21haWwuY29tIiwiaWF0IjoxNzMxNTgyODg3LCJleHAiOjE3MzE1ODM3ODd9.l9PBEk-F-N3fOZRNfNQTP3E2X5IMYU86HBSFsxqQBOY`
-      )
+      .set("Authorization", `Bearer ${mockToken.token}`)
       .send({
         userName: "Ahmad",
         email: "ahmad@gmail.com",
@@ -283,10 +271,7 @@ describe("User API Endpoints", () => {
 
     const response = await request(app)
       .delete(`/users/1`)
-      .set(
-        "Authorization",
-        `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJhbXJAZ21haWwuY29tIiwiaWF0IjoxNzMxNTgyODg3LCJleHAiOjE3MzE1ODM3ODd9.l9PBEk-F-N3fOZRNfNQTP3E2X5IMYU86HBSFsxqQBOY`
-      );
+      .set("Authorization", `Bearer ${mockToken.token}`);
 
     expect(response.status).toBe(200);
     expect(response.body).toHaveProperty(
@@ -309,10 +294,7 @@ describe("User API Endpoints", () => {
 
     const response = await request(app)
       .delete(`/users/1`)
-      .set(
-        "Authorization",
-        `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJhbXJAZ21haWwuY29tIiwiaWF0IjoxNzMxNTgyODg3LCJleHAiOjE3MzE1ODM3ODd9.l9PBEk-F-N3fOZRNfNQTP3E2X5IMYU86HBSFsxqQBOY`
-      );
+      .set("Authorization", `Bearer ${mockToken.token}`);
 
     expect(response.status).toBe(404);
     expect(response.body).toHaveProperty("error", "User not found");

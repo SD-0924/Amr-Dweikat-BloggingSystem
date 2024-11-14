@@ -3,7 +3,7 @@ import { Post } from "./postModel";
 import { Category } from "./categoryModel";
 import { Comment } from "./commentModel";
 import { PostCategory } from "./postCategoryModel";
-import { UserJWT } from "./userJWT";
+import { UserJWT } from "./userJWTModel";
 
 // Define associations between models
 export const defineAssociations = () => {

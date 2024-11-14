@@ -1,5 +1,5 @@
 // Import User model
-import { UserJWT } from "../models/userJWT";
+import { UserJWT } from "../models/userJWTModel";
 
 // Import jwt model
 import jwt from "jsonwebtoken";
