@@ -1,4 +1,3 @@
-import jwt from "jsonwebtoken";
 import { Request, Response, NextFunction } from "express";
 import { userJWTService } from "../services/userJWTService";
 
@@ -16,16 +15,13 @@ export const authenticateJWT = async (
       .json({ message: "Access denied, no token provided" });
   }
 
-  // Check if token is valid or not
-  if (!(await userJWTService.isTokenExist(token))) {
+  // Check if token exist and not expired
+  if (
+    !(await userJWTService.isTokenExist(token)) ||
+    userJWTService.isTokenExpired(token)
+  ) {
     return res.status(400).json({ message: "Invalid or expired token" });
   }
 
-  // Check if token is expired or not
-  try {
-    const decoded = jwt.verify(token, "my-secret-key");
-    next();
-  } catch (err) {
-    return res.status(400).json({ message: "Invalid or expired token" });
-  }
+  next();
 };

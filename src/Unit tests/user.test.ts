@@ -1,14 +1,20 @@
 // import supertest module to test express routes
 import request from "supertest";
 
-// import database configuration
-import { sequelize } from "../config/db";
-
 // Import express module
 import express from "express";
 
 // Import Router method
 import { userRoutes } from "../routes/userRoutes";
+
+// Import models
+import { User } from "../models/userModel";
+import { userJWTService } from "../services/userJWTService";
+import { UserJWT } from "../models/userJWT";
+
+// Mocking the entire models
+jest.mock("../models/userModel");
+jest.mock("../models/userJWT");
 
 // Initialize an Express application
 const app = express();
@@ -16,26 +22,28 @@ const app = express();
 // Handle existing routes after base URL
 app.use("/users", userRoutes);
 
-import { defineAssociations } from "../models/associations";
-
-// Reset DB before test suite
-beforeAll(async () => {
-  defineAssociations();
-  await sequelize.sync({ force: true });
-});
-
-// Close the connection after test suite
-afterAll(async () => {
-  await sequelize.close();
-});
-
 describe("User API Endpoints", () => {
   // Test1
   it("should create a new user", async () => {
+    const mockUser = {
+      id: 1,
+      userName: "Amr",
+      email: "amr@gmail.com",
+      password: "hashed_password_here",
+      dataValues: {
+        id: 1,
+        userName: "Amr",
+        email: "amr@gmail.com",
+        password: "hashed_password_here",
+      },
+    };
+    (User.create as jest.Mock).mockResolvedValue(mockUser);
+    (User.findOne as jest.Mock).mockResolvedValue(null);
+
     const response = await request(app).post("/users").send({
       userName: "Amr",
       email: "amr@gmail.com",
-      password: "Amr12341234",
+      password: "Ez12341234",
     });
 
     expect(response.status).toBe(201);
@@ -63,8 +71,22 @@ describe("User API Endpoints", () => {
     );
   });
 
-  // Test3
+  // // Test3
   it("should return error when creating a user with existing email", async () => {
+    const mockUser = {
+      id: 1,
+      userName: "Amr",
+      email: "amr@gmail.com",
+      password: "hashed_password_here",
+      dataValues: {
+        id: 1,
+        userName: "Amr",
+        email: "amr@gmail.com",
+        password: "hashed_password_here",
+      },
+    };
+    (User.findOne as jest.Mock).mockResolvedValue(mockUser);
+
     const response = await request(app).post("/users").send({
       userName: "Ez",
       email: "amr@gmail.com",
@@ -81,6 +103,21 @@ describe("User API Endpoints", () => {
 
   // Test4
   it("should return all users", async () => {
+    const mockUser = [
+      {
+        id: 1,
+        userName: "Amr",
+        email: "amr@gmail.com",
+        password: "hashed_password_here",
+        dataValues: {
+          id: 1,
+          userName: "Amr",
+          email: "amr@gmail.com",
+          password: "hashed_password_here",
+        },
+      },
+    ];
+    (User.findAll as jest.Mock).mockResolvedValue(mockUser);
     const response = await request(app).get("/users");
 
     expect(response.status).toBe(200);
@@ -92,39 +129,58 @@ describe("User API Endpoints", () => {
 
   // Test5
   it("should return a specific user", async () => {
-    const users = await request(app).get("/users");
+    const mockToken = {
+      userId: 1,
+      token:
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJhbXJAZ21haWwuY29tIiwiaWF0IjoxNzMxNTgyODg3LCJleHAiOjE3MzE1ODM3ODd9.l9PBEk-F-N3fOZRNfNQTP3E2X5IMYU86HBSFsxqQBOY",
+    };
+    (UserJWT.findOne as jest.Mock).mockResolvedValue(mockToken);
+    jest.spyOn(userJWTService, "isTokenExpired").mockReturnValue(false);
 
-    expect(users.status).toBe(200);
-
-    const tokenInfor = await request(app).post("/users/login").send({
+    const mockUser = {
+      id: 1,
+      userName: "Amr",
       email: "amr@gmail.com",
-      password: "Amr12341234",
-    });
-
-    expect(tokenInfor.status).toBe(200);
+      password: "hashed_password_here",
+      dataValues: {
+        id: 1,
+        userName: "Amr",
+        email: "amr@gmail.com",
+        password: "hashed_password_here",
+      },
+    };
+    (User.findByPk as jest.Mock).mockResolvedValue(mockUser);
 
     const response = await request(app)
-      .get(`/users/${users.body[0].id}`)
-      .set("Authorization", `Bearer ${tokenInfor.body.token}`);
+      .get(`/users/1`)
+      .set(
+        "Authorization",
+        `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJhbXJAZ21haWwuY29tIiwiaWF0IjoxNzMxNTgyODg3LCJleHAiOjE3MzE1ODM3ODd9.l9PBEk-F-N3fOZRNfNQTP3E2X5IMYU86HBSFsxqQBOY`
+      );
 
     expect(response.status).toBe(200);
-    expect(response.body).toHaveProperty("id", users.body[0].id);
+    expect(response.body).toHaveProperty("id", 1);
     expect(response.body).toHaveProperty("userName", "Amr");
     expect(response.body).toHaveProperty("email", "amr@gmail.com");
   });
 
   // Test6
   it("should return error when getting a user that does not exist", async () => {
-    const tokenInfor = await request(app).post("/users/login").send({
-      email: "amr@gmail.com",
-      password: "Amr12341234",
-    });
+    const mockToken = {
+      userId: 1,
+      token:
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJhbXJAZ21haWwuY29tIiwiaWF0IjoxNzMxNTgyODg3LCJleHAiOjE3MzE1ODM3ODd9.l9PBEk-F-N3fOZRNfNQTP3E2X5IMYU86HBSFsxqQBOY",
+    };
+    (UserJWT.findOne as jest.Mock).mockResolvedValue(mockToken);
+    jest.spyOn(userJWTService, "isTokenExpired").mockReturnValue(false);
 
-    expect(tokenInfor.status).toBe(200);
-
+    (User.findByPk as jest.Mock).mockResolvedValue(null);
     const response = await request(app)
       .get("/users/999")
-      .set("Authorization", `Bearer ${tokenInfor.body.token}`);
+      .set(
+        "Authorization",
+        `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJhbXJAZ21haWwuY29tIiwiaWF0IjoxNzMxNTgyODg3LCJleHAiOjE3MzE1ODM3ODd9.l9PBEk-F-N3fOZRNfNQTP3E2X5IMYU86HBSFsxqQBOY`
+      );
 
     expect(response.status).toBe(404);
     expect(response.body).toHaveProperty("error", "User not found");
@@ -136,20 +192,35 @@ describe("User API Endpoints", () => {
 
   // Test7
   it("should update the user information", async () => {
-    const users = await request(app).get("/users");
+    const mockToken = {
+      userId: 1,
+      token:
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJhbXJAZ21haWwuY29tIiwiaWF0IjoxNzMxNTgyODg3LCJleHAiOjE3MzE1ODM3ODd9.l9PBEk-F-N3fOZRNfNQTP3E2X5IMYU86HBSFsxqQBOY",
+    };
+    (UserJWT.findOne as jest.Mock).mockResolvedValue(mockToken);
+    jest.spyOn(userJWTService, "isTokenExpired").mockReturnValue(false);
 
-    expect(users.status).toBe(200);
-
-    const tokenInfor = await request(app).post("/users/login").send({
-      email: "amr@gmail.com",
-      password: "Amr12341234",
-    });
-
-    expect(tokenInfor.status).toBe(200);
+    const mockUser = {
+      id: 1,
+      userName: "Ahmad",
+      email: "ahmad@gmail.com",
+      password: "hashed_password_here",
+      dataValues: {
+        id: 1,
+        userName: "Ahmad",
+        email: "ahmad@gmail.com",
+        password: "hashed_password_here",
+      },
+    };
+    (User.findByPk as jest.Mock).mockResolvedValue(mockUser);
+    (User.findOne as jest.Mock).mockResolvedValue(null);
 
     const response = await request(app)
-      .put(`/users/${users.body[0].id}`)
-      .set("Authorization", `Bearer ${tokenInfor.body.token}`)
+      .put(`/users/1`)
+      .set(
+        "Authorization",
+        `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJhbXJAZ21haWwuY29tIiwiaWF0IjoxNzMxNTgyODg3LCJleHAiOjE3MzE1ODM3ODd9.l9PBEk-F-N3fOZRNfNQTP3E2X5IMYU86HBSFsxqQBOY`
+      )
       .send({
         userName: "Ahmad",
         email: "ahmad@gmail.com",
@@ -161,23 +232,29 @@ describe("User API Endpoints", () => {
       "message",
       "User updated successfully"
     );
-    expect(response.body.user).toHaveProperty("id", users.body[0].id);
+    expect(response.body.user).toHaveProperty("id", 1);
     expect(response.body.user).toHaveProperty("userName", "Ahmad");
     expect(response.body.user).toHaveProperty("email", "ahmad@gmail.com");
   });
 
   // Test8
   it("should return error when updating a user that does not exist", async () => {
-    const tokenInfor = await request(app).post("/users/login").send({
-      email: "ahmad@gmail.com",
-      password: "ahmad1234!@#$",
-    });
+    const mockToken = {
+      userId: 1,
+      token:
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJhbXJAZ21haWwuY29tIiwiaWF0IjoxNzMxNTgyODg3LCJleHAiOjE3MzE1ODM3ODd9.l9PBEk-F-N3fOZRNfNQTP3E2X5IMYU86HBSFsxqQBOY",
+    };
+    (UserJWT.findOne as jest.Mock).mockResolvedValue(mockToken);
+    jest.spyOn(userJWTService, "isTokenExpired").mockReturnValue(false);
 
-    expect(tokenInfor.status).toBe(200);
+    (User.findByPk as jest.Mock).mockResolvedValue(null);
 
     const response = await request(app)
       .put("/users/999")
-      .set("Authorization", `Bearer ${tokenInfor.body.token}`)
+      .set(
+        "Authorization",
+        `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJhbXJAZ21haWwuY29tIiwiaWF0IjoxNzMxNTgyODg3LCJleHAiOjE3MzE1ODM3ODd9.l9PBEk-F-N3fOZRNfNQTP3E2X5IMYU86HBSFsxqQBOY`
+      )
       .send({
         userName: "Ahmad",
         email: "ahmad@gmail.com",
@@ -194,25 +271,54 @@ describe("User API Endpoints", () => {
 
   // Test9
   it("should delete the user", async () => {
-    const users = await request(app).get("/users");
+    const mockToken = {
+      userId: 1,
+      token:
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJhbXJAZ21haWwuY29tIiwiaWF0IjoxNzMxNTgyODg3LCJleHAiOjE3MzE1ODM3ODd9.l9PBEk-F-N3fOZRNfNQTP3E2X5IMYU86HBSFsxqQBOY",
+    };
+    (UserJWT.findOne as jest.Mock).mockResolvedValue(mockToken);
+    jest.spyOn(userJWTService, "isTokenExpired").mockReturnValue(false);
 
-    expect(users.status).toBe(200);
-
-    const tokenInfor = await request(app).post("/users/login").send({
-      email: "ahmad@gmail.com",
-      password: "ahmad1234!@#$",
-    });
-
-    expect(tokenInfor.status).toBe(200);
+    (User.destroy as jest.Mock).mockResolvedValue(1);
 
     const response = await request(app)
-      .delete(`/users/${users.body[0].id}`)
-      .set("Authorization", `Bearer ${tokenInfor.body.token}`);
+      .delete(`/users/1`)
+      .set(
+        "Authorization",
+        `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJhbXJAZ21haWwuY29tIiwiaWF0IjoxNzMxNTgyODg3LCJleHAiOjE3MzE1ODM3ODd9.l9PBEk-F-N3fOZRNfNQTP3E2X5IMYU86HBSFsxqQBOY`
+      );
 
     expect(response.status).toBe(200);
     expect(response.body).toHaveProperty(
       "message",
       "User deleted successfully"
+    );
+  });
+
+  // Test10
+  it("should return error when deleting a user that does not exist", async () => {
+    const mockToken = {
+      userId: 1,
+      token:
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJhbXJAZ21haWwuY29tIiwiaWF0IjoxNzMxNTgyODg3LCJleHAiOjE3MzE1ODM3ODd9.l9PBEk-F-N3fOZRNfNQTP3E2X5IMYU86HBSFsxqQBOY",
+    };
+    (UserJWT.findOne as jest.Mock).mockResolvedValue(mockToken);
+    jest.spyOn(userJWTService, "isTokenExpired").mockReturnValue(false);
+
+    (User.destroy as jest.Mock).mockResolvedValue(0);
+
+    const response = await request(app)
+      .delete(`/users/1`)
+      .set(
+        "Authorization",
+        `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJhbXJAZ21haWwuY29tIiwiaWF0IjoxNzMxNTgyODg3LCJleHAiOjE3MzE1ODM3ODd9.l9PBEk-F-N3fOZRNfNQTP3E2X5IMYU86HBSFsxqQBOY`
+      );
+
+    expect(response.status).toBe(404);
+    expect(response.body).toHaveProperty("error", "User not found");
+    expect(response.body).toHaveProperty(
+      "message",
+      "the user you are trying to delete already not exists"
     );
   });
 });

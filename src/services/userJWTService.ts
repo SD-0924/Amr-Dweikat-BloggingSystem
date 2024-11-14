@@ -1,6 +1,9 @@
 // Import User model
 import { UserJWT } from "../models/userJWT";
 
+// Import jwt model
+import jwt from "jsonwebtoken";
+
 export class userJWTService {
   // Get a token by user id
   static async getTokenByUserId(userId: number) {
@@ -20,6 +23,15 @@ export class userJWTService {
         token,
       },
     });
+  }
+  // Check if token expired or not
+  static isTokenExpired(token: string): boolean {
+    try {
+      jwt.verify(token, "my-secret-key");
+      return false;
+    } catch (err) {
+      return true;
+    }
   }
   // Add user with specific token
   static async addUserWithToken(userId: number, token: string) {
