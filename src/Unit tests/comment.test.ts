@@ -20,15 +20,12 @@ const app = express();
 app.use("/posts", postRoutes);
 app.use("/users", userRoutes);
 
+import { defineAssociations } from "../models/associations";
+
 // Reset DB before test suite
 beforeAll(async () => {
-  try {
-    await sequelize.query("SET FOREIGN_KEY_CHECKS = 0;");
-    await sequelize.sync({ force: true });
-    await sequelize.query("SET FOREIGN_KEY_CHECKS = 1;");
-  } catch (error) {
-    console.error("Error during cleanup:", error);
-  }
+  defineAssociations();
+  await sequelize.sync({ force: true });
 });
 
 // Close the connection after test suite
@@ -36,18 +33,7 @@ afterAll(async () => {
   await sequelize.close();
 });
 
-// Helper function to generate a valid token
-function generateToken(payload: string | object | Buffer, expiresIn = "1h") {
-  return jwt.sign(payload, "my-secret-key", { expiresIn });
-}
-
 describe("Comment API Endpoints", () => {
-  // Generate a valid token
-  const validToken = generateToken({
-    email: "amr@gmail.com",
-    password: "Amr12341234",
-  });
-
   // Test1
   it("should create a new comment", async () => {
     const userInfo = await request(app).post("/users").send({
@@ -58,9 +44,16 @@ describe("Comment API Endpoints", () => {
 
     expect(userInfo.status).toBe(201);
 
+    const tokenInfor = await request(app).post("/users/login").send({
+      email: "amr@gmail.com",
+      password: "Amr12341234",
+    });
+
+    expect(tokenInfor.status).toBe(200);
+
     const postInfo = await request(app)
       .post("/posts")
-      .set("Authorization", `Bearer ${validToken}`)
+      .set("Authorization", `Bearer ${tokenInfor.body.token}`)
       .send({
         userId: userInfo.body.user.id,
         title: "sucess",
@@ -71,7 +64,7 @@ describe("Comment API Endpoints", () => {
 
     const response = await request(app)
       .post(`/posts/${postInfo.body.post.id}/comments`)
-      .set("Authorization", `Bearer ${validToken}`)
+      .set("Authorization", `Bearer ${tokenInfor.body.token}`)
       .send({
         content: "this is my first comment",
       });
@@ -89,9 +82,16 @@ describe("Comment API Endpoints", () => {
 
   // Test2
   it("should return error when creating a comment when post does not exist", async () => {
+    const tokenInfor = await request(app).post("/users/login").send({
+      email: "amr@gmail.com",
+      password: "Amr12341234",
+    });
+
+    expect(tokenInfor.status).toBe(200);
+
     const response = await request(app)
       .post(`/posts/999/comments`)
-      .set("Authorization", `Bearer ${validToken}`)
+      .set("Authorization", `Bearer ${tokenInfor.body.token}`)
       .send({
         name: "weak",
       });
@@ -110,16 +110,23 @@ describe("Comment API Endpoints", () => {
 
     expect(posts.status).toBe(200);
 
+    const tokenInfor = await request(app).post("/users/login").send({
+      email: "amr@gmail.com",
+      password: "Amr12341234",
+    });
+
+    expect(tokenInfor.status).toBe(200);
+
     await request(app)
       .post(`/posts/${posts.body[0].id}/comments`)
-      .set("Authorization", `Bearer ${validToken}`)
+      .set("Authorization", `Bearer ${tokenInfor.body.token}`)
       .send({
         content: "weak",
       });
 
     const response = await request(app)
       .get(`/posts/${posts.body[0].id}/comments`)
-      .set("Authorization", `Bearer ${validToken}`);
+      .set("Authorization", `Bearer ${tokenInfor.body.token}`);
 
     expect(response.status).toBe(200);
     expect(Array.isArray(response.body)).toBe(true);
@@ -131,11 +138,18 @@ describe("Comment API Endpoints", () => {
     expect(response.body[1]).toHaveProperty("content", "weak");
   });
 
-  // Test5
+  // Test4
   it("should return error when getting all comments for post does not exist", async () => {
+    const tokenInfor = await request(app).post("/users/login").send({
+      email: "amr@gmail.com",
+      password: "Amr12341234",
+    });
+
+    expect(tokenInfor.status).toBe(200);
+
     const response = await request(app)
       .get("/posts/999/comments")
-      .set("Authorization", `Bearer ${validToken}`);
+      .set("Authorization", `Bearer ${tokenInfor.body.token}`);
 
     expect(response.status).toBe(404);
     expect(response.body).toHaveProperty("error", "Post does not exists");

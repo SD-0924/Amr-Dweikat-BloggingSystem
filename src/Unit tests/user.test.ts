@@ -209,7 +209,6 @@ describe("User API Endpoints", () => {
       .delete(`/users/${users.body[0].id}`)
       .set("Authorization", `Bearer ${tokenInfor.body.token}`);
 
-    console.log("user deleted");
     expect(response.status).toBe(200);
     expect(response.body).toHaveProperty(
       "message",

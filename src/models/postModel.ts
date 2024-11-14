@@ -6,6 +6,13 @@ import { User } from "./userModel";
 export const Post = sequelize.define(
   "Post",
   {
+    userId: {
+      type: DataTypes.INTEGER,
+      references: {
+        model: User,
+        key: "id",
+      },
+    },
     id: {
       type: DataTypes.INTEGER,
       primaryKey: true,

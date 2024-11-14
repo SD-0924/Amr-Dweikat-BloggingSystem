@@ -13,6 +13,8 @@ import { userRoutes } from "../routes/userRoutes";
 
 import jwt from "jsonwebtoken";
 
+import { defineAssociations } from "../models/associations";
+
 // Initialize an Express application
 const app = express();
 
@@ -22,13 +24,8 @@ app.use("/users", userRoutes);
 
 // Reset DB before test suite
 beforeAll(async () => {
-  try {
-    await sequelize.query("SET FOREIGN_KEY_CHECKS = 0;");
-    await sequelize.sync({ force: true });
-    await sequelize.query("SET FOREIGN_KEY_CHECKS = 1;");
-  } catch (error) {
-    console.error("Error during cleanup:", error);
-  }
+  defineAssociations();
+  await sequelize.sync({ force: true });
 });
 
 // Close the connection after test suite
@@ -36,18 +33,7 @@ afterAll(async () => {
   await sequelize.close();
 });
 
-// Helper function to generate a valid token
-function generateToken(payload: string | object | Buffer, expiresIn = "1h") {
-  return jwt.sign(payload, "my-secret-key", { expiresIn });
-}
-
 describe("Category API Endpoints", () => {
-  // Generate a valid token
-  const validToken = generateToken({
-    email: "amr@gmail.com",
-    password: "Amr12341234",
-  });
-
   // Test1
   it("should create a new category", async () => {
     const userInfo = await request(app).post("/users").send({
@@ -58,9 +44,16 @@ describe("Category API Endpoints", () => {
 
     expect(userInfo.status).toBe(201);
 
+    const tokenInfor = await request(app).post("/users/login").send({
+      email: "amr@gmail.com",
+      password: "Amr12341234",
+    });
+
+    expect(tokenInfor.status).toBe(200);
+
     const postInfo = await request(app)
       .post("/posts")
-      .set("Authorization", `Bearer ${validToken}`)
+      .set("Authorization", `Bearer ${tokenInfor.body.token}`)
       .send({
         userId: userInfo.body.user.id,
         title: "sucess",
@@ -71,7 +64,7 @@ describe("Category API Endpoints", () => {
 
     const response = await request(app)
       .post(`/posts/${postInfo.body.post.id}/categories`)
-      .set("Authorization", `Bearer ${validToken}`)
+      .set("Authorization", `Bearer ${tokenInfor.body.token}`)
       .send({
         name: "strong",
       });
@@ -86,9 +79,16 @@ describe("Category API Endpoints", () => {
 
   // Test2
   it("should return error when creating a category when post does not exist", async () => {
+    const tokenInfor = await request(app).post("/users/login").send({
+      email: "amr@gmail.com",
+      password: "Amr12341234",
+    });
+
+    expect(tokenInfor.status).toBe(200);
+
     const response = await request(app)
       .post(`/posts/999/categories`)
-      .set("Authorization", `Bearer ${validToken}`)
+      .set("Authorization", `Bearer ${tokenInfor.body.token}`)
       .send({
         name: "weak",
       });
@@ -103,11 +103,18 @@ describe("Category API Endpoints", () => {
 
   // Test3
   it("should return error when creating the same category for same post", async () => {
+    const tokenInfor = await request(app).post("/users/login").send({
+      email: "amr@gmail.com",
+      password: "Amr12341234",
+    });
+
+    expect(tokenInfor.status).toBe(200);
+
     const post = await request(app).get("/posts").send();
 
     const response = await request(app)
       .post(`/posts/${post.body[0].id}/categories`)
-      .set("Authorization", `Bearer ${validToken}`)
+      .set("Authorization", `Bearer ${tokenInfor.body.token}`)
       .send({
         name: "strong",
       });
@@ -126,9 +133,16 @@ describe("Category API Endpoints", () => {
 
     expect(postInfo.status).toBe(200);
 
+    const tokenInfor = await request(app).post("/users/login").send({
+      email: "amr@gmail.com",
+      password: "Amr12341234",
+    });
+
+    expect(tokenInfor.status).toBe(200);
+
     const categoryInfo = await request(app)
       .post(`/posts/${postInfo.body[0].id}/categories`)
-      .set("Authorization", `Bearer ${validToken}`)
+      .set("Authorization", `Bearer ${tokenInfor.body.token}`)
       .send({
         name: "weak",
       });
@@ -137,7 +151,7 @@ describe("Category API Endpoints", () => {
 
     const response = await request(app)
       .get(`/posts/${postInfo.body[0].id}/categories`)
-      .set("Authorization", `Bearer ${validToken}`);
+      .set("Authorization", `Bearer ${tokenInfor.body.token}`);
 
     expect(response.status).toBe(200);
     expect(Array.isArray(response.body)).toBe(true);
@@ -148,9 +162,16 @@ describe("Category API Endpoints", () => {
 
   // Test5
   it("should return error when getting all categories for post does not exist", async () => {
+    const tokenInfor = await request(app).post("/users/login").send({
+      email: "amr@gmail.com",
+      password: "Amr12341234",
+    });
+
+    expect(tokenInfor.status).toBe(200);
+
     const response = await request(app)
       .get("/posts/999/categories")
-      .set("Authorization", `Bearer ${validToken}`);
+      .set("Authorization", `Bearer ${tokenInfor.body.token}`);
 
     expect(response.status).toBe(404);
     expect(response.body).toHaveProperty("error", "Post does not exists");
