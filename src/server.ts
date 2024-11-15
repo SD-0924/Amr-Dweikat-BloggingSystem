@@ -8,12 +8,11 @@ import { invalidRoute, invalidJSON } from "./middleware/errorHandler";
 import { userRoutes } from "./routes/userRoutes";
 import { postRoutes } from "./routes/postRoutes";
 
+// Load environment variables
+require("dotenv").config();
+
 // Initialize an Express application
 export const app = express();
-
-// Server hostname and port
-const HOSTNAME = "localhost";
-const PORT = 3000;
 
 // Handle existing routes
 app.use("/users", userRoutes);
@@ -26,6 +25,8 @@ app.use(invalidRoute);
 app.use(invalidJSON);
 
 // Start the server
-app.listen(PORT, HOSTNAME, () => {
-  console.log(`Server is running on http://${HOSTNAME}:${PORT}`);
+app.listen(Number(process.env.PORT), String(process.env.HOSTNAME), () => {
+  console.log(
+    `Server is running on http://${process.env.HOSTNAME}:${process.env.PORT}`
+  );
 });

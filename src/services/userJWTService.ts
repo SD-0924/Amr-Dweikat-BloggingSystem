@@ -4,6 +4,9 @@ import { UserJWT } from "../models/userJWTModel";
 // Import jwt model
 import jwt from "jsonwebtoken";
 
+// Load environment variables
+require("dotenv").config();
+
 export class userJWTService {
   // Get a token by user id
   static async getTokenByUserId(userId: number) {
@@ -27,7 +30,7 @@ export class userJWTService {
   // Check if token expired or not
   static isTokenExpired(token: string): boolean {
     try {
-      jwt.verify(token, "my-secret-key");
+      jwt.verify(token, String(process.env.JWT_SECRET));
       return false;
     } catch (err) {
       return true;

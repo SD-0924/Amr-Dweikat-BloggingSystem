@@ -10,10 +10,12 @@ import { userJWTService } from "../services/userJWTService";
 // Import user service
 import { userService } from "../services/userService";
 
+// Import models to encrypt and decrypt password
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 
-const JWT_SECRET = "my-secret-key";
+// Load environment variables
+require("dotenv").config();
 
 // Joi validation schema for user model
 const userSchema = joi.object({
@@ -61,7 +63,7 @@ export const loginUser = async (req: Request, res: Response): Promise<any> => {
   if (token) {
     // Check if token expired or not
     try {
-      jwt.verify(token, JWT_SECRET);
+      jwt.verify(token, String(process.env.JWT_SECRET));
     } catch (err) {
       await userJWTService.removeToken(token);
       token = jwt.sign(
@@ -69,7 +71,7 @@ export const loginUser = async (req: Request, res: Response): Promise<any> => {
           id: userInfo.dataValues.id,
           email: userInfo.dataValues.email,
         },
-        JWT_SECRET,
+        String(process.env.JWT_SECRET),
         { expiresIn: "15m" }
       );
       await userJWTService.addUserWithToken(userInfo.dataValues.id, token);
@@ -83,7 +85,7 @@ export const loginUser = async (req: Request, res: Response): Promise<any> => {
       id: userInfo.dataValues.id,
       email: userInfo.dataValues.email,
     },
-    JWT_SECRET,
+    String(process.env.JWT_SECRET),
     { expiresIn: "15m" }
   );
   await userJWTService.addUserWithToken(userInfo.dataValues.id, token);
